@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} | Kullanıcılar {% endblock %}
+
+{% block content %}
+
+<br>
+      {% include "partials/_alerts.html"%}
+<div class="row d-flex justify-content-center">
+    <div class="col-md-10">
+        <div >
+            <div class="row">
+                <div class="col-md-12">
+                    <a class="btn btn-primary btn-sm float-right mb-2" href="{% url 'register' %}">Kullanıcı Ekle</a>
+                </div>
+            </div>
+            <table class="table border table-striped">
+                <tr>
+                    <th>Adı</th>
+                    <th>Soyadı</th>
+                    <th>Email</th>
+                    <th>Kullanıcı adı</th>
+                    <th>Yetki durumu</th>
+                    <th></th>
+                </tr>
+
+                {% for user in users %}
+                <tr>
+                    <td>{{user.first_name}}</td>
+                    <td>{{user.last_name}}</td>
+                    <td>{{user.email}}</td>
+                    <td>{{user.username}}</td>
+                    {% if user.is_admin %}
+                    <td>Yönetici</td>
+                    {% else %}
+                    <td>Kullanıcı</td>
+                    {% endif %}
+                    <td><a class="btn btn-sm btn-success" href="{% url 'edituser' user.id %}">Güncelle</a>
+                        <a class="btn btn-sm btn-danger" href="{% url 'deleteuser' user.id %}">Sil</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock%}

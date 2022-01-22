@@ -1,0 +1,16 @@
+{% extends 'base.html' %} 
+{% load static %}
+
+{% block title %} | Yetkiniz yok {% endblock %}
+
+{% block content %}
+<section class="py-1 text-white">
+  <div class="container">
+    <div class="row text-center">
+      <div class="col-md-8">
+        {% include "partials/_alerts.html"%}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
