@@ -10,10 +10,10 @@ class CustomManager(models.Manager):
         return query
 
 class Documents(models.Model):
-    admin_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=u'yükleyen kullanıcı')
+    admin_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=u'yükleyen kullanici')
     documents_name = models.CharField('doküman ismi', unique=True, max_length=250)
     documents_metadata = models.TextField('doküman metadata', null=True,  blank=True)
-    documents_doc = models.FileField('yüklenecek doküman', upload_to='static/')
+    documents_doc = models.FileField('yüklenen doküman', upload_to='static/')
     objects = CustomManager()
 
     def save(self, *args, **kwargs):

@@ -91,7 +91,7 @@ def login(request):
       if user.is_admin:
         return redirect('user_index')
       else:
-        return redirect('user_index')
+        return redirect('documents_index')
     else:
       messages.error(request, 'Kullanıcı adı yada şifre hatalı')
       return redirect('login')

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %} | Tez dosyası yükleme {% endblock %}
+
+{% block content %}
+<section id="register" class="mt-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Arama</h4>
+                    </div>
+                    <div class="card-body">
+                        {% include 'partials/_alerts.html' %}
+                        <form action="{% url 'search' %}" enctype="multipart/form-data" method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <div class="form-group">
+                                    <label for="search_sentence">Ara: </label>
+                                    <span style="float:right;">
+                                        {{form.search_sentence}}
+                                    </span>
+                                </div>
+                                <label>Doküman seçiniz</label>
+                                {{form.documents_doc}}{{form.admin_user.as_hidden}}
+                                <br>
+                                <div class="row">
+                                    <div class="col-md-12 ">
+                                        <button class="btn btn-success ml-2 float-right" type="submit">Ara</button>
+                                        <a class="btn btn-warning float-right" href="{% url 'documents_index' %}">İptal</a>
+                                    </div>
+                                    <div class="col-md-6 mx-auto">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

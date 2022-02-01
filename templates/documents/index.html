@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} | Dokümalar {% endblock %}
+
+{% block content %}
+
+<br>
+      {% include "partials/_alerts.html"%}
+<div class="row d-flex justify-content-center">
+        <div class="col-md-11">
+        <div>
+            <div class="row">
+                <div class="col-md-12">
+
+                    <!-- TODO: searh for listed document -->
+
+                    <a class="btn btn-primary btn-sm m-2 float-right" href="{% url 'search' %}">Arama</a>
+
+
+                </div>
+            </div>
+            <table class="table border table-striped">
+                <tr>
+                    <th>Ders adı</th>
+                    <th>Başlığı</th>
+                    <th>Dönemi</th>
+                    <th>Yükleyen</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+
+                {% for documents in theses %}
+                <tr>
+                    <td>{{documents.class_name}}</td>
+                    <td>{{documents.documents_title|slice:"0:100"}}</td>
+                    <td>{{documents.documents_term}}</td>
+                    <td>{{documents.admin_user}}</td>
+                    <td><a class="btn btn-sm btn-success" href="{% url 'documents_details' documents.id %}">Detaylar</a></td>
+                    <td><a class="btn btn-sm btn-danger" href="{% url 'delete_documents' documents.id %}">Sil</a></td>
+                    <td><a class="btn btn-sm btn-dark" href="http://localhost:8000/media/{{documents.documents_doc}}" target="_blank">Doküman
+                        PDF</a></td>
+                </tr>
+                {% endfor %}
+
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.3.1.min.js' %} "></script>
+
+<script type="text/javascript">
+    $(function() {
+        $('#querytype').change(function(){
+            $('.secenekler').hide();
+            $('#' + $(this).val()).show();
+        });
+    });
+  </script>
+{% endblock%}
+
+
+
+
