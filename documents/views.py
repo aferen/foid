@@ -20,11 +20,11 @@ from django.contrib.auth.decorators import login_required
 def index(request):
   user = request.user
   if not user.is_admin:
-    theses = Documents.objects.all().filter(Q(admin_user=user)).order_by('-id')
+    documents = Documents.objects.all().filter(Q(userID=user)).order_by('-id')
   else:
-    theses = Documents.objects.all().order_by('-id')
+    documents = Documents.objects.all().order_by('-id')
 
-  paginator = Paginator(theses, 20)
+  paginator = Paginator(documents, 20)
   page = request.GET.get('page')
   paged_documents = paginator.get_page(page)
 
@@ -33,7 +33,7 @@ def index(request):
   else:
     usernames = User.objects.order_by().filter(pk=user.id).values('id', 'username')
   context = {
-    'theses': paged_documents,
+    'documents': paged_documents,
     'uname': usernames,
   }
   return render(request, 'documents/index.html', context)
@@ -43,18 +43,16 @@ def search(request):
   user = request.user
   form = DocumentsForm(user=user)
   if request.method == 'POST':
-    print(request.POST)
     form = DocumentsForm(request.POST, request.FILES, user=user)
     if form.is_valid():
-      t_obj = form.save(commit=False)
-      #file_name = t_obj.thesis_doc.file.name
-      
-      # file_path = t_obj.thesis_doc.field.storage.base_location
+      obj = form.save(commit=False)
+      obj.name = obj.path.file.name
+      obj.save()
 
-      t_obj.save()
-      file_path = t_obj.thesis_doc.file.name
-      path, file_name = os.path.split(file_path)
-      Documents.objects.create()
+      # file_path = t_obj.thesis_doc.field.storage.base_location
+      #file_path = t_obj.documents_doc.file.name
+      #path, file_name = os.path.split(file_path)
+      #Documents.objects.create()
 
       return redirect('documents_index')
 

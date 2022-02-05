@@ -10,18 +10,23 @@ class CustomManager(models.Manager):
         return query
 
 class Documents(models.Model):
-    admin_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=u'yükleyen kullanici')
-    documents_name = models.CharField('doküman ismi', unique=True, max_length=250)
-    documents_metadata = models.TextField('doküman metadata', null=True,  blank=True)
-    documents_doc = models.FileField('yüklenen doküman', upload_to='static/')
+    userID = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    metadata = models.TextField(null=True,  blank=True)
+    path = models.FileField(upload_to='static/')
+    query = models.CharField(null=True,  blank=True, max_length=200)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
     objects = CustomManager()
 
     def save(self, *args, **kwargs):
         super(Documents, self).save(*args, **kwargs)
 
 class SearchHistory(models.Model):
-    SearchHistory_documents = models.ForeignKey(Documents, on_delete=models.CASCADE, verbose_name='doküman')
-    search_sentence = models.CharField('arama cümlesi', null=True,  blank=True, max_length=200)
+    documentID = models.ForeignKey(Documents, on_delete=models.CASCADE, verbose_name='doküman')
+    query = models.CharField('arama cümlesi', null=True,  blank=True, max_length=200)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
     objects = CustomManager()
 
     def save(self, *args, **kwargs):

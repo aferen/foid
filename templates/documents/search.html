@@ -17,13 +17,14 @@
                             {% csrf_token %}
                             <div class="form-group">
                                 <div class="form-group">
-                                    <label for="search_sentence">Ara: </label>
+                                    <label for="query">Ara: </label>
                                     <span style="float:right;">
-                                        {{form.search_sentence}}
+                                        {{form.query}}
                                     </span>
                                 </div>
                                 <label>Doküman seçiniz</label>
-                                {{form.documents_doc}}{{form.admin_user.as_hidden}}
+                                {{form.path}}
+                                {{form.userID.as_hidden}}
                                 <br>
                                 <div class="row">
                                     <div class="col-md-12 ">

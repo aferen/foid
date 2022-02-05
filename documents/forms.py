@@ -4,10 +4,10 @@ from .models import Documents
 class DocumentsForm(forms.ModelForm):
     class Meta:
         model = Documents
-        fields = ['documents_doc', 'admin_user']
+        fields = ['query', 'path', 'userID']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
         super(DocumentsForm, self).__init__(*args, **kwargs)
-        self.fields['admin_user'].initial = user.id
+        self.fields['userID'].initial = user.id
        

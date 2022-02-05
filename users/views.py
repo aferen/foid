@@ -109,7 +109,7 @@ def logout(request):
 @is_admin
 @login_required
 def index(request):
-  users = User.objects.order_by('username').filter(is_superuser=False)
+  users = User.objects.order_by('username')
 
   paginator = Paginator(users, 20)
   page = request.GET.get('page')
