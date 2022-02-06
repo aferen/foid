@@ -12,7 +12,7 @@
         <div >
             <div class="row">
                 <div class="col-md-12">
-                    <a class="btn btn-primary btn-sm float-right m-2" href="{% url 'register' %}">Kullanıcı Ekle</a>
+                    <a class="btn btn-primary btn-sm float-right m-2" href="{% url 'register' %}"><i class="fas fa-user-plus"></i></a>
                 </div>
             </div>
             <table class="table border table-striped">
@@ -36,8 +36,8 @@
                     {% else %}
                     <td>Kullanıcı</td>
                     {% endif %}
-                    <td><a class="btn btn-sm btn-success" href="{% url 'edituser' user.id %}">Güncelle</a>
-                        <a class="btn btn-sm btn-danger" href="{% url 'deleteuser' user.id %}">Sil</a></td>
+                    <td><a class="btn btn-sm btn-danger ml-1 float-right" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
+                    <a class="btn btn-sm btn-success ml-1 float-right" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
                 </tr>
                 {% endfor %}
             </table>

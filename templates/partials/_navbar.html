@@ -18,11 +18,11 @@
                 {% if user.is_authenticated %}
                 {% if user.is_admin %}
                 <li class="nav-item active mr-3">
-                    <a class="nav-link" href="{% url 'user_index' %}">Kullanıcılar</a>
+                    <a class="nav-link" href="{% url 'user_index' %}"><i class="fas fa-users"></i> Kullanıcılar</a>
                 </li>
                 {% endif %}
                 <li class="nav-item active mr-3">
-                    <a class="nav-link" href="{% url 'documents_index' %}">Dokümanlar</a>
+                    <a class="nav-link" href="{% url 'documents_index' %}"><i class="fas fa-folder-open"></i> Dokümanlar</a>
                 </li>
                 {% endif %}
             </ul>
@@ -33,14 +33,14 @@
                 <li class="nav-item active mr-3">
                     {% if user.is_admin %}
                     <a class="nav-link" href="{% url 'profile' %}">
-                        {{user.first_name}} {{user.last_name}} (yönetici) </a>
+                        <i class="fas fa-user-circle"></i> {{user.first_name}} {{user.last_name}} (yönetici) </a>
                     {% else %}
                     <a class="nav-link" href="{% url 'profile' %}">
-                        {{user.first_name}} {{user.last_name}}</a>
+                        <i class="fas fa-user-circle"></i> {{user.first_name}} {{user.last_name}}</a>
                     {% endif %}
                 </li>
                 <li class="nav-item active mr-3">
-                    <a href="javascript:{document.getElementById('logout').submit()}" class="nav-link">Çıkış</a>
+                    <a href="javascript:{document.getElementById('logout').submit()}" class="nav-link"><i class="fas fa-sign-out-alt"></i></a>
                     <form action="{% url 'logout' %}" method="POST" id="logout">
                         {% csrf_token %}
                         <input type="hidden">
@@ -48,10 +48,10 @@
                 </li>
                 {% else %}
                 <li class="nav-item active mr-3">
-                    <a class="nav-link" href="{% url 'register' %}">Kayıt Ol</a>
+                    <a class="nav-link" href="{% url 'register' %}"><i class="fas fa-user-plus"></i></a>
                 </li>
                 <li class="nav-item active mr-3">
-                    <a class="nav-link" href="{% url 'login' %}">Giriş</a>
+                    <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i></a>
                 </li>
                 {% endif %}
             </ul>

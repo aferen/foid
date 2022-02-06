@@ -15,7 +15,7 @@
 
                     <!-- TODO: searh for listed document -->
 
-                    <a class="btn btn-primary btn-sm m-2 float-right" href="{% url 'documents_search' %}">Yeni Arama</a>
+                    <a class="btn btn-primary btn-sm m-2 float-right" href="{% url 'documents_search' %}"><i class="fas fa-search-plus"></i> Yeni Arama</a>
 
 
                 </div>
@@ -30,19 +30,19 @@
                     {% endif %}
                     <th></th>
                 </tr>
-
                 {% for item in documents %}
                 <tr>
                     <td>{{item.name}}</td>
                     <td>{{item.query}}</td>
                     <td>{{item.modified_date}}</td>
                     {% if user.is_admin %}
-                    <td>{{item.userID}}</td>
+                    <td>{{item.user}}</td>
                     {% endif %}
                     <td>
-                        <a class="btn btn-sm mt-1 btn-success" href="{% url 'documents_detail' item.id %}">Detaylar</a>
-                        <a class="btn btn-sm mt-1 btn-danger" href="{% url 'documents_delete' item.id %}">Sil</a>
-                        <a class="btn btn-sm mt-1 btn-dark" href="http://localhost:8000/media/{{item.path}}" target="_blank">Doküman PDF</a>
+                        <a class="btn btn-sm mt-1 btn-primary" href="{% url 'documents_search' %}"><i class="fas fa-search-plus"></i></a>
+                        <a class="btn btn-sm mt-1 btn-info" href="{% url 'documents_detail' item.id %}"><i class="fas fa-info-circle"></i></a>
+                        <a class="btn btn-sm mt-1 btn-danger" href="{% url 'documents_delete' item.id %}"><i class="fas fa-trash-alt"></i></a>
+                        <a class="btn btn-sm mt-1 btn-success" href="http://localhost:8000/media/{{item.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
                     </td>     
                 </tr>
                 {% endfor %}

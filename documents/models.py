@@ -10,7 +10,6 @@ def generate_uuid():
     return uuid.uuid4().hex
 
 def get_file_path(instance, filename):
-    print(instance.docID)
     filename = "%s.%s" % (instance.docID, filename.split('.')[-1])
     return os.path.join('static/', filename)
 
@@ -20,12 +19,11 @@ class CustomManager(models.Manager):
         return query
 
 class Documents(models.Model):
-    userID = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
     docID = models.UUIDField(default=generate_uuid, editable=False, unique=True)
     metadata = models.TextField(null=True,  blank=True)
     path = models.FileField(upload_to=get_file_path,null=True,blank=True,)
-    query = models.CharField(null=True,  blank=True, max_length=200)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     objects = CustomManager()
@@ -35,8 +33,8 @@ class Documents(models.Model):
 
 
 class SearchHistory(models.Model):
-    documentID = models.ForeignKey(Documents, on_delete=models.CASCADE, verbose_name='doküman')
-    query = models.CharField('arama cümlesi', null=True,  blank=True, max_length=200)
+    document = models.ForeignKey(Documents, on_delete=models.CASCADE)
+    query = models.CharField(null=True,  blank=True, max_length=200)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     objects = CustomManager()

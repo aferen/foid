@@ -20,22 +20,20 @@ from django.contrib.auth.decorators import login_required
 def index(request):
   user = request.user
   if not user.is_admin:
-    documents = Documents.objects.all().filter(Q(userID=user)).order_by('-id')
+    documents = Documents.objects.all().filter(Q(user=user)).order_by('-id')    
   else:
     documents = Documents.objects.all().order_by('-id')
 
+  for doc in documents:
+    searchHistory = SearchHistory.objects.filter(Q(document=doc)).order_by('-pk').last()
+    doc.query = searchHistory.query
+    doc.modified_date = searchHistory.modified_date
+    
   paginator = Paginator(documents, 20)
   page = request.GET.get('page')
   paged_documents = paginator.get_page(page)
 
-  if user.is_admin:
-    usernames = User.objects.order_by().values('id', 'username')
-  else:
-    usernames = User.objects.order_by().filter(pk=user.id).values('id', 'username')
-  context = {
-    'documents': paged_documents,
-    'uname': usernames,
-  }
+  context = {'documents': paged_documents}
   return render(request, 'documents/index.html', context)
 
 @login_required
@@ -48,6 +46,8 @@ def search(request):
       document = form.save(commit=False)
       document.name = document.path.file.name
       document.save()
+      query = form.data.get('query')
+      SearchHistory.objects.create(document=document, query=query)
 
       # file_path = t_obj.thesis_doc.field.storage.base_location
       #file_path = t_obj.documents_doc.file.name
@@ -60,16 +60,19 @@ def search(request):
   return render(request, 'documents/search.html', context)
 
 @login_required
-def detail(request, thesis_id):
+def detail(request, document_id):
   user = request.user
-  document = Documents.objects.get(Q(id=thesis_id), Q(admin_user=user))
-
-  context = {'document':document}
+  if not user.is_admin:
+    document = Documents.objects.get(Q(id=document_id), Q(user=user))
+  else:
+    document = Documents.objects.get(Q(id=document_id))
+  searchHistory = SearchHistory.objects.filter(Q(document=document)).order_by('-id') 
+  context = {'document':document, 'searchHistory': searchHistory}
   return render(request, 'documents/details.html', context)
 
 @login_required
-def delete(request, thesis_id):
-  document = Documents.objects.get(id=thesis_id)
+def delete(request, document_id):
+  document = Documents.objects.get(id=document_id)
   if request.method == "POST":
       document.delete()
       return redirect('documents_index')

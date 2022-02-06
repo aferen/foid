@@ -17,7 +17,7 @@ def register(request):
       user = get_object_or_404(User, username=username)
       user.set_password(user.password)
       user.save()
-      messages.success(request, 'Kayıt Olundu')
+      messages.success(request, 'Kayıt işlemi tamamlandı.')
       return redirect('user_index')
     else:
       messages.error(request, 'Kayıt Olunamadı')
@@ -93,7 +93,7 @@ def login(request):
       else:
         return redirect('documents_index')
     else:
-      messages.error(request, 'Kullanıcı adı yada şifre hatalı')
+      messages.error(request, 'Kullanıcı adı veya şifre hatalı')
       return redirect('login')
 
   else:
