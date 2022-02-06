@@ -13,7 +13,7 @@
                     </div>
                     <div class="card-body">
                         {% include 'partials/_alerts.html' %}
-                        <form action="{% url 'search' %}" enctype="multipart/form-data" method="POST">
+                        <form action="{% url 'documents_search' %}" enctype="multipart/form-data" method="POST">
                             {% csrf_token %}
                             <div class="form-group">
                                 <div class="form-group">
@@ -29,7 +29,7 @@
                                 <div class="row">
                                     <div class="col-md-12 ">
                                         <button class="btn btn-success ml-2 float-right" type="submit">Ara</button>
-                                        <a class="btn btn-warning float-right" href="{% url 'documents_index' %}">İptal</a>
+                                        <a class="btn btn-warning float-right" href="{% url 'index' %}">İptal</a>
                                     </div>
                                     <div class="col-md-6 mx-auto">
                                     </div>

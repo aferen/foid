@@ -8,14 +8,14 @@
 <br>
       {% include "partials/_alerts.html"%}
 <div class="row d-flex justify-content-center">
-        <div class="col-md-11">
+        <div class="col-md-10">
         <div>
             <div class="row">
                 <div class="col-md-12">
 
                     <!-- TODO: searh for listed document -->
 
-                    <a class="btn btn-primary btn-sm m-2 float-right" href="{% url 'search' %}">Arama</a>
+                    <a class="btn btn-primary btn-sm m-2 float-right" href="{% url 'documents_search' %}">Yeni Arama</a>
 
 
                 </div>
@@ -31,19 +31,21 @@
                     <th></th>
                 </tr>
 
-                {% for doc in documents %}
+                {% for item in documents %}
                 <tr>
-                    <td>{{doc.name}}</td>
-                    <td>{{doc.query}}</td>
-                    <td>{{doc.modified_date}}</td>
+                    <td>{{item.name}}</td>
+                    <td>{{item.query}}</td>
+                    <td>{{item.modified_date}}</td>
                     {% if user.is_admin %}
-                    <td>{{doc.userID}}</td>
+                    <td>{{item.userID}}</td>
                     {% endif %}
-                    <td><a class="btn btn-sm btn-dark" href="http://localhost:8000/media/{{doc.path}}" target="_blank">Doküman
-                        PDF</a></td>
+                    <td>
+                        <a class="btn btn-sm mt-1 btn-success" href="{% url 'documents_detail' item.id %}">Detaylar</a>
+                        <a class="btn btn-sm mt-1 btn-danger" href="{% url 'documents_delete' item.id %}">Sil</a>
+                        <a class="btn btn-sm mt-1 btn-dark" href="http://localhost:8000/media/{{item.path}}" target="_blank">Doküman PDF</a>
+                    </td>     
                 </tr>
                 {% endfor %}
-
             </table>
         </div>
     </div>

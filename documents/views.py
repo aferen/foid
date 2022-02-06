@@ -45,9 +45,9 @@ def search(request):
   if request.method == 'POST':
     form = DocumentsForm(request.POST, request.FILES, user=user)
     if form.is_valid():
-      obj = form.save(commit=False)
-      obj.name = obj.path.file.name
-      obj.save()
+      document = form.save(commit=False)
+      document.name = document.path.file.name
+      document.save()
 
       # file_path = t_obj.thesis_doc.field.storage.base_location
       #file_path = t_obj.documents_doc.file.name
@@ -58,3 +58,21 @@ def search(request):
 
   context = {'form': form}
   return render(request, 'documents/search.html', context)
+
+@login_required
+def detail(request, thesis_id):
+  user = request.user
+  document = Documents.objects.get(Q(id=thesis_id), Q(admin_user=user))
+
+  context = {'document':document}
+  return render(request, 'documents/details.html', context)
+
+@login_required
+def delete(request, thesis_id):
+  document = Documents.objects.get(id=thesis_id)
+  if request.method == "POST":
+      document.delete()
+      return redirect('documents_index')
+
+  context = {'document':document}
+  return render(request, 'documents/delete.html', context)
