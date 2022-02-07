@@ -39,7 +39,7 @@
                     <td>{{item.user}}</td>
                     {% endif %}
                     <td>
-                        <a class="btn btn-sm mt-1 btn-primary" href="{% url 'documents_search' %}"><i class="fas fa-search-plus"></i></a>
+                        <a class="btn btn-sm mt-1 btn-primary" href="{% url 'documents_searchById' item.id %}"><i class="fas fa-search-plus"></i></a>
                         <a class="btn btn-sm mt-1 btn-info" href="{% url 'documents_detail' item.id %}"><i class="fas fa-info-circle"></i></a>
                         <a class="btn btn-sm mt-1 btn-danger" href="{% url 'documents_delete' item.id %}"><i class="fas fa-trash-alt"></i></a>
                         <a class="btn btn-sm mt-1 btn-success" href="http://localhost:8000/media/{{item.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>

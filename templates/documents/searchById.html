@@ -13,7 +13,7 @@
                     </div>
                     <div class="card-body">
                         {% include 'partials/_alerts.html' %}
-                        <form action="{% url 'documents_search' %}" enctype="multipart/form-data" method="POST">
+                        <form action="{% url 'documents_searchById' document.id %}" enctype="multipart/form-data" method="POST">
                             {% csrf_token %}
                             <div class="form-group">
                                 <div class="form-group">
@@ -22,8 +22,6 @@
                                         {{document.query}}
                                     </span>
                                 </div>
-                                <label>Doküman seçiniz</label>
-                                {{document.path}}
                                 {{document.user.as_hidden}}
                                 <br>
                                 <div class="row">
