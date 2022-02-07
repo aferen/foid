@@ -12,7 +12,7 @@
         <div >
             <div class="row">
                 <div class="col-md-12">
-                    <a class="open-modal btn btn-primary btn-sm float-right m-2" data-popup-url="{% url 'adduser' %}" href="{% url 'adduser' %}"><i class="fas fa-user-plus"></i></a>
+                    <a class="open-user-popup btn btn-primary btn-sm float-right m-2" data-popup-url="{% url 'adduser' %}" href="{% url 'adduser' %}"><i class="fas fa-user-plus"></i></a>
                 </div>
             </div>
             <table class="table border table-striped table-sm">
@@ -37,13 +37,45 @@
                     <td>Kullanıcı</td>
                     {% endif %}
                     <td>
-                        <a class="open-modal btn btn-sm btn-danger ml-1 float-right" data-popup-url="{% url 'deleteuser' user.id %}" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
-                        <a class="open-modal btn btn-sm btn-success ml-1 float-right" data-popup-url="{% url 'edituser' user.id %}" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
+                        <a class="open-user-popup btn btn-sm btn-danger ml-1 float-right" data-popup-url="{% url 'deleteuser' user.id %}" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
+                        <a class="open-user-popup btn btn-sm btn-success ml-1 float-right" data-popup-url="{% url 'edituser' user.id %}" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
     </div>
 </div>
+{% include "users/popup.html" %}
+<script src="{% static 'assets/js/jquery-3.3.1.min.js' %} "></script>
 
+
+<script type="text/javascript">
+    $(function() {
+        $( document ).ready(function() {
+            document.getElementById("addUserHeader").style.display= 'none';
+            document.getElementById("editUserHeader").style.display= 'none';
+            document.getElementById("deleteUserHeader").style.display= 'none';
+        });
+        $(document).on("click", ".open-user-popup", function (e) {
+            e.preventDefault();
+            var $popup = $("#userPopup");
+            var popup_url = $(this).data("popup-url");
+            if(popup_url.indexOf('add') != -1) {
+                document.getElementById("addUserHeader").style.display= '';
+            } else if(popup_url.indexOf('edit') != -1) {
+                document.getElementById("editUserHeader").style.display= '';
+            } else if (popup_url.indexOf('delete') != -1) {
+                document.getElementById("deleteUserHeader").style.display= '';
+            }
+            $(".modal-body", $popup).load(popup_url, function () {
+                $popup.modal("show");
+            });
+        });
+        $("#userPopup").on("hidden.bs.modal", function () {
+            document.getElementById("addUserHeader").style.display= 'none';
+            document.getElementById("editUserHeader").style.display= 'none';
+            document.getElementById("deleteUserHeader").style.display= 'none';
+        });
+    });
+  </script>
 {% endblock%}
