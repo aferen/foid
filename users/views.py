@@ -26,58 +26,6 @@ def register(request):
   context = {'form': form}
   return render(request, 'users/register.html', context)
 
-@is_admin
-@login_required
-def edituser(request, user_id):
-  user = User.objects.get(pk=user_id)
-  form = UserForm(instance=user)
-
-  if request.method == 'POST':
-    form = UserForm(request.POST, instance=user)
-    if form.is_valid():
-      form.save()
-      user.set_password(user.password)
-      user.save()
-      messages.success(request, 'Kullanıcı kaydı güncellendi')
-      return redirect('user_index')
-    else:
-      messages.error(request, 'Kullanıcı kaydı güncellenemedi')
-
-  context = { 'form': form, 'item': user }
-  return render(request, 'users/register.html', context)
-
-@login_required
-def profile(request):
-  user_id = request.user.id
-  print(user_id)
-  user = User.objects.get(pk=user_id)
-  form = UserForm(instance=user)
-
-  if request.method == 'POST':
-    form = UserForm(request.POST, instance=user)
-    if form.is_valid():
-      form.save()
-      user.set_password(user.password)
-      user.save()
-      messages.success(request, 'Kullanıcı kaydı güncellendi')
-      return redirect('/')
-    else:
-      messages.error(request, 'Kullanıcı kaydı güncellenemedi')
-
-  context = { 'form': form, 'item': user }
-  return render(request, 'users/profile.html', context)
-
-@is_admin
-@login_required
-def deleteuser(request, user_id):
-  user = User.objects.get(pk=user_id)
-  if request.method == "POST":
-      user.delete()
-      return redirect('user_index')
-
-  context = {'user': user}
-  return render(request, 'users/delete.html', context)
-
 def login(request):
   if request.method == 'POST':
     username = request.POST['username']
@@ -100,6 +48,27 @@ def login(request):
     return render(request, 'users/login.html')
 
 @login_required
+def profile(request):
+  user_id = request.user.id
+  print(user_id)
+  user = User.objects.get(pk=user_id)
+  form = UserForm(instance=user)
+  form.id=user_id
+  if request.method == 'POST':
+    form = UserForm(request.POST, instance=user)
+    if form.is_valid():
+      form.save()
+      user.set_password(user.password)
+      user.save()
+      messages.success(request, 'Kullanıcı kaydı güncellendi')
+      return redirect('/')
+    else:
+      messages.error(request, 'Kullanıcı kaydı güncellenemedi')
+
+  context = { 'form': form, 'item': user }
+  return render(request, 'users/profile.html', context)
+
+@login_required
 def logout(request):
   if request.method == 'POST':
     auth.logout(request)
@@ -120,4 +89,55 @@ def index(request):
   }
   return render(request, 'users/index.html', context)
 
+@is_admin
+@login_required
+def add(request):
+  if request.method == 'POST':
+    form = UserForm(request.POST)
+    if form.is_valid():
+      form.save()
+      username = request.POST['username']
+      user = get_object_or_404(User, username=username)
+      user.set_password(user.password)
+      user.save()
+      messages.success(request, 'Kayıt işlemi tamamlandı.')
+    else:
+      messages.error(request, 'Kayıt eklenemedi.')
+    return redirect('user_index')
 
+
+  form = UserForm()
+  context = {'form': form}
+  return render(request, 'users/add.html', context)
+
+@is_admin
+@login_required
+def edit(request, user_id):
+  print("user id: ", user_id)
+  user = User.objects.get(pk=user_id)
+  form = UserForm(instance=user)
+  form.id=user_id
+  if request.method == 'POST':
+    form = UserForm(request.POST, instance=user)
+    if form.is_valid():
+      form.save()
+      user.set_password(user.password)
+      user.save()
+      messages.success(request, 'Kullanıcı kaydı güncellendi.')
+    else:
+      messages.error(request, 'Kullanıcı kaydı güncellenemedi.')
+    return redirect('user_index')
+
+  context = { 'form': form, 'item': user }
+  return render(request, 'users/edit.html', context)
+
+@is_admin
+@login_required
+def delete(request, user_id):
+  user = User.objects.get(pk=user_id)
+  if request.method == "POST":
+      user.delete()
+      return redirect('user_index')
+
+  context = {'user': user}
+  return render(request, 'users/delete.html', context)

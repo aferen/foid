@@ -1,4 +1,4 @@
-<form action="{% url 'profile' %}" enctype="multipart/form-data" method="POST">
+<form action="{% url 'adduser' %}" enctype="multipart/form-data" method="POST">
     {% csrf_token %}
     <div class="form-group">
         <label for="first_name">Adı</label>
@@ -30,14 +30,12 @@
             {{form.password}}
         </span>
     </div>
-    {% if user.is_admin %}
     <div class="form-group">
         <label for="isAdmin">Yönetici mi?</label>
         <span style="float:right;">
             {{form.is_admin}}
         </span>
     </div>
-    {% endif %}
     <div class="form-group">
         <input type="submit" value="Kaydet" class="btn ml-2 btn-primary float-right">
 </form>

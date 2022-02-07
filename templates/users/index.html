@@ -12,10 +12,10 @@
         <div >
             <div class="row">
                 <div class="col-md-12">
-                    <a class="btn btn-primary btn-sm float-right m-2" href="{% url 'register' %}"><i class="fas fa-user-plus"></i></a>
+                    <a class="open-modal btn btn-primary btn-sm float-right m-2" data-popup-url="{% url 'adduser' %}" href="{% url 'adduser' %}"><i class="fas fa-user-plus"></i></a>
                 </div>
             </div>
-            <table class="table border table-striped">
+            <table class="table border table-striped table-sm">
                 <tr>
                     <th>Adı</th>
                     <th>Soyadı</th>
@@ -36,12 +36,14 @@
                     {% else %}
                     <td>Kullanıcı</td>
                     {% endif %}
-                    <td><a class="btn btn-sm btn-danger ml-1 float-right" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
-                    <a class="btn btn-sm btn-success ml-1 float-right" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
+                    <td>
+                        <a class="open-modal btn btn-sm btn-danger ml-1 float-right" data-popup-url="{% url 'deleteuser' user.id %}" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
+                        <a class="open-modal btn btn-sm btn-success ml-1 float-right" data-popup-url="{% url 'edituser' user.id %}" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
     </div>
 </div>
+
 {% endblock%}

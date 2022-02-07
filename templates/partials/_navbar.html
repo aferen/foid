@@ -32,10 +32,10 @@
                 {% if user.is_authenticated %}
                 <li class="nav-item active mr-3">
                     {% if user.is_admin %}
-                    <a class="nav-link" href="{% url 'profile' %}">
+                    <a class="open-modal nav-link" data-popup-url="{% url 'profile' %}" href="{% url 'profile' %}">
                         <i class="fas fa-user-circle"></i> {{user.first_name}} {{user.last_name}} (yönetici) </a>
                     {% else %}
-                    <a class="nav-link" href="{% url 'profile' %}">
+                    <a class="open-modal nav-link" data-popup-url="{% url 'profile' %}" href="{% url 'profile' %}">
                         <i class="fas fa-user-circle"></i> {{user.first_name}} {{user.last_name}}</a>
                     {% endif %}
                 </li>
@@ -58,3 +58,40 @@
         </div>
     </div>
 </nav>
+{% include "users/modal.html" %}
+<script src="{% static 'assets/js/jquery-3.3.1.min.js' %} "></script>
+
+
+<script type="text/javascript">
+    $(function() {
+        $( document ).ready(function() {
+            document.getElementById("profileUserHeader").style.display= 'none';
+            document.getElementById("addUserHeader").style.display= 'none';
+            document.getElementById("editUserHeader").style.display= 'none';
+            document.getElementById("deleteUserHeader").style.display= 'none';
+        });
+        $(document).on("click", ".open-modal", function (e) {
+            e.preventDefault();
+            var $popup = $("#popup");
+            var popup_url = $(this).data("popup-url");
+            if(popup_url.indexOf('profile') != -1) {
+                document.getElementById("profileUserHeader").style.display= '';
+            } else if(popup_url.indexOf('add') != -1) {
+                document.getElementById("addUserHeader").style.display= '';
+            } else if(popup_url.indexOf('edit') != -1) {
+                document.getElementById("editUserHeader").style.display= '';
+            } else if (popup_url.indexOf('delete') != -1) {
+                document.getElementById("deleteUserHeader").style.display= '';
+            }
+            $(".modal-body", $popup).load(popup_url, function () {
+                $popup.modal("show");
+            });
+        });
+        $("#popup").on("hidden.bs.modal", function () {
+            document.getElementById("profileUserHeader").style.display= 'none';
+            document.getElementById("addUserHeader").style.display= 'none';
+            document.getElementById("editUserHeader").style.display= 'none';
+            document.getElementById("deleteUserHeader").style.display= 'none';
+        });
+    });
+  </script>
