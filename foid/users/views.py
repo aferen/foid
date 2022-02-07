@@ -2,13 +2,14 @@ from django.shortcuts import redirect
 from django.contrib import messages, auth
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from .forms import UserForm
+from .forms import UserForm, UserEditForm
 from pages.decorators import is_admin
 from django.contrib.auth.decorators import login_required
 
 from users.models import User
 
 def register(request):
+  form = UserForm()
   if request.method == 'POST':
     form = UserForm(request.POST)
     if form.is_valid():
@@ -17,12 +18,11 @@ def register(request):
       user = get_object_or_404(User, username=username)
       user.set_password(user.password)
       user.save()
-      messages.success(request, 'Kayıt işlemi tamamlandı.')
+      messages.success(request, 'Kayıt işlemi tamamlandı. Giriş yapabilirsiniz.')
       return redirect('user_index')
     else:
       messages.error(request, 'Kayıt Olunamadı')
 
-  form = UserForm()
   context = {'form': form}
   return render(request, 'users/register.html', context)
 
@@ -50,16 +50,15 @@ def login(request):
 @login_required
 def profile(request):
   user_id = request.user.id
-  print(user_id)
   user = User.objects.get(pk=user_id)
-  form = UserForm(instance=user)
+  form = UserEditForm(instance=user)
   form.id=user_id
   if request.method == 'POST':
-    form = UserForm(request.POST, instance=user)
+    form = UserEditForm(request.POST, instance=user)
     if form.is_valid():
       form.save()
-      user.set_password(user.password)
-      user.save()
+      #user.set_password(user.password)
+      #user.save()
       messages.success(request, 'Kullanıcı kaydı güncellendi')
       return redirect('/')
     else:
@@ -92,6 +91,7 @@ def index(request):
 @is_admin
 @login_required
 def add(request):
+  form = UserForm()
   if request.method == 'POST':
     form = UserForm(request.POST)
     if form.is_valid():
@@ -104,25 +104,21 @@ def add(request):
     else:
       messages.error(request, 'Kayıt eklenemedi.')
     return redirect('user_index')
-
-
-  form = UserForm()
   context = {'form': form}
   return render(request, 'users/add.html', context)
 
 @is_admin
 @login_required
 def edit(request, user_id):
-  print("user id: ", user_id)
   user = User.objects.get(pk=user_id)
-  form = UserForm(instance=user)
+  form = UserEditForm(instance=user)  
   form.id=user_id
   if request.method == 'POST':
-    form = UserForm(request.POST, instance=user)
+    form = UserEditForm(request.POST, instance=user)
     if form.is_valid():
       form.save()
-      user.set_password(user.password)
-      user.save()
+      #user.set_password(user.password)
+      #user.save()
       messages.success(request, 'Kullanıcı kaydı güncellendi.')
     else:
       messages.error(request, 'Kullanıcı kaydı güncellenemedi.')

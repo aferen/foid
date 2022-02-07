@@ -11,6 +11,9 @@
           {% endif %}
         </strong>
         {{ message }}
+        {% for key, value in form.errors.items %}
+          {{ value }}
+        {% endfor %}
       </div>
     </div>
   {% endfor %}
