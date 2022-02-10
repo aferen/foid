@@ -33,7 +33,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'foid.urls'
+ROOT_URLCONF = 'frontend.urls'
 
 TEMPLATES = [
     {
@@ -53,7 +53,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'foid.wsgi.application'
+WSGI_APPLICATION = 'frontend.wsgi.application'
 
 DATABASES = {
     'default': {
@@ -93,14 +93,14 @@ USE_L10N = True
 USE_TZ = True
 
 if DEBUG:
-    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'foid/static')
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')
     ]
 else:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'foid/static')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'frontend/static')
 
 STATIC_URL = '/static/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'foid/media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'frontend/media')
 MEDIA_URL = '/media/'
 
 from django.contrib.messages import constants as messages
@@ -113,5 +113,5 @@ LOGIN_URL = 'login'
 
 LOGIN_REDIRECT_URL = '/'
 
-TIKA_SERVER_JAR = os.path.join(BASE_DIR, 'foid/static')
+TIKA_SERVER_JAR = os.path.join(BASE_DIR, 'frontend/static')
 

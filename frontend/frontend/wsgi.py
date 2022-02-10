@@ -1,10 +1,10 @@
 """
-WSGI config for btre foid.
+WSGI config for btre frontend.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
 For more information on this file, see
-https://docs.djangofoid.com/en/2.1/howto/deployment/wsgi/
+https://docs.djangofrontend.com/en/2.1/howto/deployment/wsgi/
 """
 
 import os
