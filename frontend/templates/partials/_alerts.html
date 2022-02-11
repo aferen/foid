@@ -1,7 +1,7 @@
 {% if messages %}
   {% for message in messages %}
     <div id="message" class="container">
-      <div class="alert alert-{{ message.tags }} alert-dismissible text-center" role="alert">
+      <div class="alert alert-{{ message.tags }} alert-dismissible alert-fixed" id="{{ message.tags }}-alert" role="alert">
         <button type="button" class="close" data-dismiss="alert">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -18,3 +18,22 @@
     </div>
   {% endfor %}
 {% endif %}
+
+<script type="text/javascript">
+  $(function() {
+    $("#success-alert").fadeTo(2000, 500).slideUp(500, function(){
+        $("#success-alert").slideUp(500);
+    });
+  });
+</script>
+
+<style>
+  .alert-fixed {
+    position:fixed;
+    margin-right: 10px; 
+    bottom: 0px; 
+    right: 0px; 
+    width: 350px;
+    z-index:9999; 
+}
+</style>

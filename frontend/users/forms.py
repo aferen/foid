@@ -37,4 +37,4 @@ class UserEditForm(UserChangeForm):
         confirm_new_password = cleaned_data.get("confirm_new_password")
 
         if confirm_new_password and new_password and new_password != confirm_new_password:
-            self.add_error('password', "şifre ve şifre tekrar uyuşmamaktadır.")
+            self.add_error('password', "Şifre ve şifre tekrar uyuşmamaktadır.")
