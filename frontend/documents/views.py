@@ -106,8 +106,12 @@ def delete(request, document_id):
   else:
     document = Documents.objects.get(Q(id=document_id))
   if request.method == "POST":
+    try:
       document.delete()
-      return redirect('documents_index')
+      messages.success(request, 'Doküman silindi.')
+    except:
+      messages.error(request, 'Doküman silinemedi.')
+    return redirect('documents_index')
 
   context = {'document':document}
   return render(request, 'documents/delete.html', context)
@@ -120,9 +124,12 @@ def deleteSearchHistory(request, history_id):
   else:
     history = SearchHistory.objects.get(Q(id=history_id))
   if request.method == "POST":
+    try:
       history.delete()
-      messages.success(request, 'Kayıt Başarılı Bir Şekilde Silindi.')
-      return redirect('documents_detail', history.document.id)
+      messages.success(request, 'Arama kaydı silindi.')
+    except:
+      messages.error(request, 'Arama kaydı silinemedi.')
+    return redirect('documents_detail', history.document.id)
 
   context = {'history':history}
   return render(request, 'documents/deleteSearchHistory.html', context)

@@ -138,8 +138,12 @@ def edit(request, user_id):
 def delete(request, user_id):
   user = User.objects.get(pk=user_id)
   if request.method == "POST":
+    try:
       user.delete()
-      return redirect('user_index')
+      messages.success(request, 'Kullanıcı silindi.')
+    except:
+      messages.error(request, 'Kullanıcı silinemedi.')
+    return redirect('user_index')
 
   context = {'user': user}
   return render(request, 'users/delete.html', context)

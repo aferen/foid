@@ -41,7 +41,7 @@
                     <td>
                         <a class="btn btn-sm mt-1 btn-primary" href="{% url 'documents_searchById' item.id %}"><i class="fas fa-search-plus"></i></a>
                         <a class="btn btn-sm mt-1 btn-info" href="{% url 'documents_detail' item.id %}"><i class="fas fa-info-circle"></i></a>
-                        <a class="btn btn-sm mt-1 btn-danger" href="{% url 'documents_delete' item.id %}"><i class="fas fa-trash-alt"></i></a>
+                        <a class="open-document-popup btn btn-sm mt-1 btn-danger" data-popup-url="{% url 'documents_delete' item.id %}" href="{% url 'documents_delete' item.id %}"><i class="fas fa-trash-alt"></i></a>
                         <a class="btn btn-sm mt-1 btn-success" href="http://localhost:8000/media/{{item.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
                     </td>     
                 </tr>
@@ -51,16 +51,32 @@
     </div>
 </div>
 
-<script src="{% static 'assets/js/jquery-3.3.1.min.js' %} "></script>
+{% include "documents/popup.html" %}
 
 <script type="text/javascript">
     $(function() {
-        $('#querytype').change(function(){
-            $('.secenekler').hide();
-            $('#' + $(this).val()).show();
+        $( document ).ready(function() {
+            document.getElementById("deleteDocumentHeader").style.display= 'none';
+            document.getElementById("deleteSearchHistoryHeader").style.display= 'none';
         });
+        $(document).on("click", ".open-document-popup", function (e) {
+            e.preventDefault();
+            var $popup = $("#documentPopup");
+            var popup_url = $(this).data("popup-url");
+            if(popup_url.indexOf('delete') != -1) {
+                document.getElementById("deleteDocumentHeader").style.display= '';
+            }
+            $(".modal-body", $popup).load(popup_url, function () {
+                $popup.modal("show");
+            });
+        });
+        $("#documentPopup").on("hidden.bs.modal", function () {
+            document.getElementById("deleteDocumentHeader").style.display= 'none';
+            document.getElementById("deleteSearchHistoryHeader").style.display= 'none';
+        });    
     });
   </script>
+
 {% endblock%}
 
 

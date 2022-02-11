@@ -9,36 +9,64 @@
 <br>
 
 
-<div class="row d-flex justify-content-center">
-<div class="row col-md-10 pr-0">
-	{% include 'partials/_alerts.html' %}
-	<div class="col-md-12 pr-0">
-			<span><b>Doküman Adı:</b> {{document.name}}</span>
-			<a class="btn btn-dark ml-1 mb-1 btn-sm float-right text-white" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
-				<a class="btn btn-success ml-1 mb-1 btn-sm float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
-				<a class="btn btn-danger ml-1 mb-1 btn-sm float-right" href="{% url 'documents_delete' document.id %}"><i class="fas fa-trash-alt"></i></a>
-				<a class="btn btn-primary ml-1 mb-1 btn-sm float-right" href="{% url 'documents_searchById' document.id %}"><i class="fas fa-search-plus"></i></a>
+<div class="d-flex justify-content-center">
+	<div class="row col-md-10 pr-0">
+		{% include 'partials/_alerts.html' %}
+		<div class="col-md-12 pr-0">
+				<span><b>Doküman Adı:</b> {{document.name}}</span>
+				<a class="btn btn-dark ml-1 mb-1 btn-sm float-right text-white" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
+					<a class="btn btn-success ml-1 mb-1 btn-sm float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
+					<a class="open-document-popup btn btn-danger ml-1 mb-1 btn-sm float-right" data-popup-url="{% url 'documents_delete' document.id %}" href="{% url 'documents_delete' document.id %}"><i class="fas fa-trash-alt"></i></a>
+					<a class="btn btn-primary ml-1 mb-1 btn-sm float-right" href="{% url 'documents_searchById' document.id %}"><i class="fas fa-search-plus"></i></a>
 
-			<table class="table border table-hover table-sm">
-				<thead class="thead-light">
-					<tr>
-						<th>Sorgu</th>
-						<th>Arama Tarihi</th>
-						<th></th>
+				<table class="table border table-hover table-sm">
+					<thead class="thead-light">
+						<tr>
+							<th>Sorgu</th>
+							<th>Arama Tarihi</th>
+							<th></th>
+						</tr>
+					</thead>
+					{% for history in searchHistory %}
+					<tr style="cursor: pointer;">
+						<td>{{history.query}}</td>
+						<td>{{history.created_date}}</td>
+						<td><a class="open-document-popup btn btn-danger btn-sm ml-1 float-right" data-popup-url="{% url 'documents_deleteSearchHistory' history.id %}" href="{% url 'documents_deleteSearchHistory' history.id %}"><i class="fas fa-trash-alt"></i></a>
+							<a class="btn btn-info btn-sm ml-1 float-right text-white" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-download"></i></a>
+							<a class="btn btn-success btn-sm ml-1 float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-alt"></i></a>
+						</td>
 					</tr>
-				</thead>
-				{% for history in searchHistory %}
-				<tr style="cursor: pointer;">
-					<td>{{history.query}}</td>
-					<td>{{history.created_date}}</td>
-					<td><a class="btn btn-danger btn-sm ml-1 float-right" href="{% url 'documents_deleteSearchHistory' history.id %}"><i class="fas fa-trash-alt"></i></a>
-						<a class="btn btn-info btn-sm ml-1 float-right text-white" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-download"></i></a>
-						<a class="btn btn-success btn-sm ml-1 float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-alt"></i></a>
-					</td>
-				</tr>
-				{% endfor %}
-			</table>
+					{% endfor %}
+				</table>
+		</div>
 	</div>
 </div>
-</div>
+{% include "documents/popup.html" %}
+
+<script type="text/javascript">
+    $(function() {
+        $( document ).ready(function() {
+            document.getElementById("deleteDocumentHeader").style.display= 'none';
+            document.getElementById("deleteSearchHistoryHeader").style.display= 'none';
+        });
+        $(document).on("click", ".open-document-popup", function (e) {
+            e.preventDefault();
+            var $popup = $("#documentPopup");
+            var popup_url = $(this).data("popup-url");
+            if(popup_url.indexOf('deleteHistory') != -1) {
+                document.getElementById("deleteSearchHistoryHeader").style.display= '';
+            } else if(popup_url.indexOf('delete') != -1) {
+                document.getElementById("deleteDocumentHeader").style.display= '';
+            }
+            $(".modal-body", $popup).load(popup_url, function () {
+                $popup.modal("show");
+            });
+        });
+        $("#documentPopup").on("hidden.bs.modal", function () {
+            document.getElementById("deleteDocumentHeader").style.display= 'none';
+            document.getElementById("deleteSearchHistoryHeader").style.display= 'none';
+        });    
+    });
+  </script>
+
 {% endblock%}
