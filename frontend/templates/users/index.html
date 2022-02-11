@@ -46,8 +46,6 @@
     </div>
 </div>
 {% include "users/popup.html" %}
-<script src="{% static 'assets/js/jquery-3.3.1.min.js' %} "></script>
-
 
 <script type="text/javascript">
     $(function() {
@@ -55,6 +53,7 @@
             document.getElementById("addUserHeader").style.display= 'none';
             document.getElementById("editUserHeader").style.display= 'none';
             document.getElementById("deleteUserHeader").style.display= 'none';
+            document.getElementById("profileUserHeader").style.display= 'none';
         });
         $(document).on("click", ".open-user-popup", function (e) {
             e.preventDefault();
@@ -75,7 +74,7 @@
             document.getElementById("addUserHeader").style.display= 'none';
             document.getElementById("editUserHeader").style.display= 'none';
             document.getElementById("deleteUserHeader").style.display= 'none';
-        });
+        });      
     });
   </script>
 {% endblock%}

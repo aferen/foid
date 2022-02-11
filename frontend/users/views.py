@@ -57,12 +57,17 @@ def profile(request):
     form = UserEditForm(request.POST, instance=user)
     if form.is_valid():
       form.save()
-      #user.set_password(user.password)
-      #user.save()
-      messages.success(request, 'Kullanıcı kaydı güncellendi')
-      return redirect('/')
+      if form.cleaned_data['new_password']:
+        user.set_password(form.cleaned_data['new_password'])
+        user.save()
+        messages.success(request, 'Profiliniz güncellendi. Şifrenizi de güncellendiğiniz için yeni şifreniz ile tekrar giriş yapınız.')
+      else:
+        messages.success(request, 'Kullanıcı kaydı güncellendi')
     else:
       messages.error(request, 'Kullanıcı kaydı güncellenemedi')
+      print (form.is_valid())
+      print (form.errors)
+    return redirect('/')
 
   context = { 'form': form, 'item': user }
   return render(request, 'users/profile.html', context)
@@ -117,8 +122,9 @@ def edit(request, user_id):
     form = UserEditForm(request.POST, instance=user)
     if form.is_valid():
       form.save()
-      #user.set_password(user.password)
-      #user.save()
+      if form.cleaned_data['new_password']:
+        user.set_password(form.cleaned_data['new_password'])
+        user.save()
       messages.success(request, 'Kullanıcı kaydı güncellendi.')
     else:
       messages.error(request, 'Kullanıcı kaydı güncellenemedi.')
