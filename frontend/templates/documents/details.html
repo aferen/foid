@@ -14,16 +14,17 @@
 		{% include 'partials/_alerts.html' %}
 		<div class="col-md-12 pr-0">
 				<span><b>Doküman Adı:</b> {{document.name}}</span>
-				<a class="btn btn-dark ml-1 mb-1 btn-sm float-right text-white" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
-					<a class="btn btn-success ml-1 mb-1 btn-sm float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
-					<a class="open-document-popup btn btn-danger ml-1 mb-1 btn-sm float-right" data-popup-url="{% url 'documents_delete' document.id %}" href="{% url 'documents_delete' document.id %}"><i class="fas fa-trash-alt"></i></a>
-					<a class="btn btn-primary ml-1 mb-1 btn-sm float-right" href="{% url 'documents_searchById' document.id %}"><i class="fas fa-search-plus"></i></a>
+				<a title="Geri" class="btn btn-dark ml-1 mb-1 btn-sm float-right text-white" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
+				<a title="Dokümanı Göster" class="btn btn-success ml-1 mb-1 btn-sm float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
+				<a title="Arama Sil" class="open-document-popup btn btn-danger ml-1 mb-1 btn-sm float-right" data-popup-url="{% url 'documents_delete' document.id %}" href="{% url 'documents_delete' document.id %}"><i class="fas fa-trash-alt"></i></a>
+				<a title="Yeni Arama" class="btn btn-primary ml-1 mb-1 btn-sm float-right" href="{% url 'documents_searchById' document.id %}"><i class="fas fa-search-plus"></i></a>
 
 				<table class="table border table-hover table-sm">
 					<thead class="thead-light">
 						<tr>
 							<th>Sorgu</th>
 							<th>Arama Tarihi</th>
+							<th>Sonuç</th>
 							<th></th>
 						</tr>
 					</thead>
@@ -31,9 +32,11 @@
 					<tr style="cursor: pointer;">
 						<td>{{history.query}}</td>
 						<td>{{history.created_date}}</td>
-						<td><a class="open-document-popup btn btn-danger btn-sm ml-1 float-right" data-popup-url="{% url 'documents_deleteSearchHistory' history.id %}" href="{% url 'documents_deleteSearchHistory' history.id %}"><i class="fas fa-trash-alt"></i></a>
-							<a class="btn btn-info btn-sm ml-1 float-right text-white" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-download"></i></a>
-							<a class="btn btn-success btn-sm ml-1 float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-alt"></i></a>
+						<td></td>
+						<td>
+							<a title="Arama Kaydı Sil" class="open-document-popup btn btn-danger btn-sm ml-1 float-right" data-popup-url="{% url 'documents_deleteSearchHistory' history.id %}" href="{% url 'documents_deleteSearchHistory' history.id %}"><i class="fas fa-trash-alt"></i></a>
+							<a title="Arama Sonucu İndir" class="btn btn-info btn-sm ml-1 float-right text-white" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-download"></i></a>
+							<a title="Arama Sonucu Göster" class="btn btn-success btn-sm ml-1 float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-alt"></i></a>
 						</td>
 					</tr>
 					{% endfor %}

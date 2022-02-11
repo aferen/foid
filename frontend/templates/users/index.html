@@ -12,7 +12,7 @@
         <div >
             <div class="row">
                 <div class="col-md-12">
-                    <a class="open-user-popup btn btn-primary btn-sm float-right m-2" data-popup-url="{% url 'adduser' %}" href="{% url 'adduser' %}"><i class="fas fa-user-plus"></i></a>
+                    <a title="Kullanıcı Ekle" class="open-user-popup btn btn-primary btn-sm float-right m-2" data-popup-url="{% url 'adduser' %}" href="{% url 'adduser' %}"><i class="fas fa-user-plus"></i></a>
                 </div>
             </div>
             <table class="table border table-striped table-sm">
@@ -37,8 +37,8 @@
                     <td>Kullanıcı</td>
                     {% endif %}
                     <td>
-                        <a class="open-user-popup btn btn-sm btn-danger ml-1 float-right" data-popup-url="{% url 'deleteuser' user.id %}" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
-                        <a class="open-user-popup btn btn-sm btn-success ml-1 float-right" data-popup-url="{% url 'edituser' user.id %}" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
+                        <a title="Kullanıcı Sil" class="open-user-popup btn btn-sm btn-danger ml-1 float-right" data-popup-url="{% url 'deleteuser' user.id %}" href="{% url 'deleteuser' user.id %}"><i class="fas fa-trash-alt"></i></a>
+                        <a title="Kullanıcı Güncelle" class="open-user-popup btn btn-sm btn-success ml-1 float-right" data-popup-url="{% url 'edituser' user.id %}" href="{% url 'edituser' user.id %}"><i class="fas fa-user-edit"></i></a></td>
                 </tr>
                 {% endfor %}
             </table>

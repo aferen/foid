@@ -32,10 +32,10 @@
                 {% if user.is_authenticated %}
                 <li class="nav-item active mr-3">
                     {% if user.is_admin %}
-                    <a class="open-navbar-popup nav-link" data-popup-url="{% url 'profile' %}" href="{% url 'profile' %}">
+                    <a title="Profil" class="open-navbar-popup nav-link" data-popup-url="{% url 'profile' %}" href="{% url 'profile' %}">
                         <i class="fas fa-user-circle"></i> {{user.first_name}} {{user.last_name}} (yönetici) </a>
                     {% else %}
-                    <a class="open-navbar-popup nav-link" data-popup-url="{% url 'profile' %}" href="{% url 'profile' %}">
+                    <a title="Profil" class="open-navbar-popup nav-link" data-popup-url="{% url 'profile' %}" href="{% url 'profile' %}">
                         <i class="fas fa-user-circle"></i> {{user.first_name}} {{user.last_name}}</a>
                     {% endif %}
                 </li>
