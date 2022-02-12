@@ -3,43 +3,72 @@
 {% block title %} | Tez dosyası yükleme {% endblock %}
 
 {% block content %}
-<section id="register" class="mt-4">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6 mx-auto">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4><i class="fas fa-search-plus"></i> Arama</h4>
+<br>
+      {% include "partials/_alerts.html"%}
+<div class="d-flex justify-content-center">
+    <div class="col-md-8">
+        <form enctype="multipart/form-data" method="POST" action="">
+            {% csrf_token %}
+           
+            <div class="form-row">
+                <div class="col-md-10 mb-3">
+                    <input type="text" class="form-control" id="email2" placeholder="Sorgu Cümlesi" name="email">
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <label class="form-check-label" style="font-weight: normal;">
+                          <input type="checkbox" class="form-check-input" id="advanceSearch"> Gelişmiş Arama
+                        </label>
+                      </div>      
                     </div>
-                    <div class="card-body">
-                        {% include 'partials/_alerts.html' %}
-                        <form action="{% url 'documents_search' %}" enctype="multipart/form-data" method="POST">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <div class="form-group">
-                                    <label for="query">Ara: </label>
-                                    <span style="float:right;">
-                                        {{document.query}}
-                                    </span>
-                                </div>
-                                <label>Doküman seçiniz</label>
-                                {{document.path}}
-                                {{document.user.as_hidden}}
-                                <br>
-                                <div class="row">
-                                    <div class="col-md-12 ">
-                                        <button class="btn btn-primary ml-2 float-right" type="submit">Ara</button>
-                                        <a class="btn btn-info float-right" href="{% url 'index' %}">İptal</a>
-                                    </div>
-                                    <div class="col-md-6 mx-auto">
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+            </div>  
+            <div id="advanceSearchInfo" style="display:none" class="alert alert-dark col-md-12" role="alert">
+                <h4 class="alert-heading">Well done!</h4>
+                <p>Aww yeah, you successfully read this important alert message. This example text is going to run a bit longer so that you can see how spacing within an alert works with this kind of content.</p>
+                <hr>
+                <p class="mb-0">Whenever you need to, be sure to use margin utilities to keep things nice and tidy.</p>
+            </div>
+            <div class="form-row">
+                <div class="col-md-10 mb-3">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" lang="tr" id="validatedCustomFile" required>
+                        <label class="custom-file-label" style="color: gray; font-weight: normal;" for="validatedCustomFile">Dosya Seçiniz</label>
                     </div>
                 </div>
+                <div class="col-md-2 mb-3">
+                    <button type="submit" style="float: right;" class="btn btn-success btn-block"><i class="fas fa-search"></i> Ara</button>
+                </div>
             </div>
+
+        </form>
+
+        <p style="color: gray; text-align: center;">veya</p>
+
+        <div class="drop-box" id="dropBox">
+            <p style="text-align: center; vertical-align: middle; line-height: 300px; font-size: 22px; color: gray;">Dosya Yüklemek İçin Sürükle & Bırak</p>
         </div>
+        <div id="uploaded_files"></div>
     </div>
-</section>
+</div>
+
+<script>
+    $(".custom-file-input").on("change", function() {
+      var fileName = $(this).val().split("\\").pop();
+      $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+    $('#advanceSearch').click(function() {  
+        if (this.checked) {
+
+            $("#advanceSearchInfo").slideDown(500, function(){
+                 $("#advanceSearchInfo").slideDown(500);
+             });
+        } else {
+            $("#advanceSearchInfo").fadeTo(0, 600).slideUp(500, function(){
+                $("#advanceSearchInfo").slideUp(500);
+            });
+        }
+    }); 
+
+</script>
+
 {% endblock %}

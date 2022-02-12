@@ -1,0 +1,39 @@
+#myProgress {
+    width: 100%;
+}
+#uploaded_files {
+    margin-top: 25px;
+    display: flex;
+}
+label {
+    font-weight: bold;
+}
+.file-icon i {
+    font-size: 30px;
+}
+.file-details {
+    margin-top: -2px;
+    padding-left: 10px;
+    width: 100%;
+}
+.file-details p {
+    margin-bottom: -7px;
+}
+small {
+    margin-top: 0;
+    color: black;
+}
+#dropBox {
+    width: 100%; 
+    height: 300px; 
+    border: 5px dashed gray;
+    border-radius: 25px;
+}
+
+#dropBox:hover {
+    border: 5px dashed gray;
+}
+
+.custom-file-input:lang(tr)~.custom-file-label::after {
+    content: "Gözat";
+}

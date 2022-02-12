@@ -10,14 +10,14 @@
     <link rel="icon" href="{% static 'assets/img/favicon.ico'%}" />
     <title>FOID {% block title %}{% endblock %}</title>
     <link href="{% static 'fontawesome_free/css/all.min.css' %}" rel="stylesheet" type="text/css">
-
+    <link rel="stylesheet" href="{% static 'assets/css/app.css' %}">
   </head>
   <body>
 
     {% include 'partials/_navbar.html' %}
   
     {% block content %} {% endblock %}
-
+    <script src="{% static 'assets/js/app.js' %}"></script>
     <script src="{% static 'assets/js/jquery-3.3.1.min.js' %} "></script>
     <script src="{% static 'assets/js/bootstrap.bundle.min.js' %} "></script>
   </body>
