@@ -36,7 +36,12 @@
                     <td>{{item.query}}</td>
                     <td>{{item.modified_date}}</td>
                     {% if user.is_admin %}
-                    <td>{{item.user}}</td>
+                    <td>
+                        {% if item.user|length > 0 %}
+                            {{ item.user }}
+                        {% else %}
+                            Anonim
+                        {% endif %}</td>
                     {% endif %}
                     <td>
                         <a title="Yeni Arama" class="btn btn-sm mt-1 btn-primary" href="{% url 'documents_searchById' item.id %}"><i class="fas fa-search-plus"></i></a>

@@ -10,7 +10,6 @@ class FileUpload {
         document.getElementById("dropBox").style.display= 'none';
         this.file = this.input.files[0];
         $('.filename').text(this.file.name)
-        // PDFObject.embed("/media/static/artificial_intelligence_tutorial.pdf", "#resultViewer");
     }
 
     //upload file
@@ -79,6 +78,9 @@ class FileUpload {
                 } else {
                     // upload complete
                     $('.textbox').text(res.data);
+                    $('#spinner').css('display',"")
+                    PDFObject.embed("/media/static/artificial_intelligence_tutorial.pdf", "#resultViewer");
+
                     //console.log(res.data)
                 }
             }
