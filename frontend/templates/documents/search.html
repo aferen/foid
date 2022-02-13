@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %} | Tez dosyası yükleme {% endblock %}
 
@@ -6,48 +7,66 @@
 <br>
       {% include "partials/_alerts.html"%}
 <div class="d-flex justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-10">
         <form enctype="multipart/form-data" method="POST" action="">
             {% csrf_token %}
-           
             <div class="form-row">
-                <div class="col-md-10 mb-3">
-                    <input type="text" class="form-control" id="email2" placeholder="Sorgu Cümlesi" name="email">
+                <div class="col-md-9 mb-3">
+                    <input type="text" class="form-control" id="query" placeholder="Aranılacak Nesneyi Giriniz" name="query">
                 </div>
-                <div class="col-md-2">
-                    <div class="form-check">
-                        <label class="form-check-label" style="font-weight: normal;">
-                          <input type="checkbox" class="form-check-input" id="advanceSearch"> Gelişmiş Arama
-                        </label>
-                      </div>      
+                <div class="col-md-2 mb-3 mt-lg-2">
+                    <div class="form-row">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" id="advanceSearch" class="custom-control-input"/>
+                            <label class="custom-control-label" for="advanceSearch" style="font-weight: normal;">Gelişmiş Arama</label>
+                            <a id="advanceSearchInfo" style="cursor: pointer;" class="text-primary"><i class="fas fa-info-circle"></i></a>
                     </div>
+                      
+                    </div>
+                </div>
+                
+                <div class="col-md-1 mb-3">
+                    <button type="submit" id="submitSearch" style="float: right;" class="btn btn-success btn-block"><i class="fas fa-search"></i> Ara</button>
+                </div>
             </div>  
-            <div id="advanceSearchInfo" style="display:none" class="alert alert-dark col-md-12" role="alert">
+            <div id="advanceSearchModal" style="display:none" class="alert alert-dark col-md-12" role="alert">
                 <h4 class="alert-heading">Well done!</h4>
                 <p>Aww yeah, you successfully read this important alert message. This example text is going to run a bit longer so that you can see how spacing within an alert works with this kind of content.</p>
                 <hr>
                 <p class="mb-0">Whenever you need to, be sure to use margin utilities to keep things nice and tidy.</p>
             </div>
-            <div class="form-row">
-                <div class="col-md-10 mb-3">
-                    <div class="custom-file">
-                        <input type="file" class="custom-file-input" lang="tr" id="validatedCustomFile" required>
-                        <label class="custom-file-label" style="color: gray; font-weight: normal;" for="validatedCustomFile">Dosya Seçiniz</label>
+        </form>
+        <div style="display: none;" id="uploaded_files">
+            <input type="file" class="custom-file-input" lang="tr" id="fileupload" style="display: none;">
+
+            <div class="file-icon">
+                <i class="far fa-file-alt"></i>
+            </div>
+            <div class="file-details">
+                <p style="display: inline-block;" class="filename"></p>
+                <button title="Kaldır" type="button" id="removeFile" class="close">
+                    <span>&times;</span>
+                </button>
+                <small style="display: block" class="textbox"></small>
+                <div id="progressBar" class="progress" style="margin: 2px; display:none;">
+                    <div class="progress-bar bg-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
                     </div>
                 </div>
-                <div class="col-md-2 mb-3">
-                    <button type="submit" style="float: right;" class="btn btn-success btn-block"><i class="fas fa-search"></i> Ara</button>
-                </div>
             </div>
-
-        </form>
-
-        <p style="color: gray; text-align: center;">veya</p>
-
-        <div class="drop-box" id="dropBox">
-            <p style="text-align: center; vertical-align: middle; line-height: 300px; font-size: 22px; color: gray;">Dosya Yüklemek İçin Sürükle & Bırak</p>
         </div>
-        <div id="uploaded_files"></div>
+        <!-- <div class="spinner-border text-success" role="status">
+            <span class="sr-only">Loading...</span>
+        </div> -->
+
+        <!-- <div class="dropbox" id="dropBox">
+            <p style="text-align: center; vertical-align: middle; line-height: 300px; font-size: 22px; color: gray;">Dosya Yüklemek İçin Sürükle & Bırak</p>
+        </div> -->
+        <!-- <p style="text-align: center; vertical-align: middle; line-height: 300px; font-size: 22px; color: gray;">Dosya Yüklemek İçin Sürükle & Bırak</p> -->
+
+        <label id="dropBox" for="fileupload">Gözat veya Sürükle & Bırak</label>
+        <input style="display: none;" type="file" id="fileupload" />
+        <div id="resultViewer"></div>
+
     </div>
 </div>
 
@@ -58,17 +77,22 @@
     });
     $('#advanceSearch').click(function() {  
         if (this.checked) {
-
-            $("#advanceSearchInfo").slideDown(500, function(){
-                 $("#advanceSearchInfo").slideDown(500);
+            $("#query").attr("placeholder", "Sorgu Cümlesi Giriniz");
+        } else {
+            $("#query").attr("placeholder", "Aranılacak Nesneyi Giriniz");
+        }
+    }); 
+    $('#advanceSearchInfo').click(function() {  
+        if ($('#advanceSearchModal').css('display') == 'none') {
+            $("#advanceSearchModal").slideDown(500, function(){
+                 $("#advanceSearchModal").slideDown(500);
              });
         } else {
-            $("#advanceSearchInfo").fadeTo(0, 600).slideUp(500, function(){
-                $("#advanceSearchInfo").slideUp(500);
+            $("#advanceSearchModal").fadeTo(0, 600).slideUp(500, function(){
+                $("#advanceSearchModal").slideUp(500);
             });
         }
     }); 
-
 </script>
 
 {% endblock %}

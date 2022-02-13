@@ -1,9 +1,6 @@
-import itertools
 from functools import reduce
-import operator
 from pydoc import doc
 
-from tika import parser
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
@@ -12,7 +9,7 @@ from django.db.models import Q, Count
 from .forms import DocumentsForm
 from frontend.settings import MEDIA_ROOT
 import os
-
+from django.http import JsonResponse
 from documents.models import *
 from django.contrib.auth.decorators import login_required
 
@@ -27,8 +24,9 @@ def index(request):
 
   for doc in documents:
     searchHistory = SearchHistory.objects.filter(Q(document=doc)).order_by('pk').last()
-    doc.query = searchHistory.query
-    doc.modified_date = searchHistory.modified_date
+    if searchHistory:
+      doc.query = searchHistory.query
+      doc.modified_date = searchHistory.modified_date
     
   paginator = Paginator(documents, 20)
   page = request.GET.get('page')
@@ -37,25 +35,56 @@ def index(request):
   context = {'documents': paged_documents}
   return render(request, 'documents/index.html', context)
 
-@login_required
 def search(request):
   user = request.user
   form = DocumentsForm(user=user)
-  if request.method == 'POST':
-    form = DocumentsForm(request.POST, request.FILES, user=user)
-    if form.is_valid():
-      document = form.save(commit=False)
-      document.name = document.path.file.name
-      document.save()
-      query = form.data.get('query')
-      SearchHistory.objects.create(document=document, query=query)
+  if request.method == 'POST':  
+    file = request.FILES['file'].read()
+    query = request.POST['query']
+    fileName= request.POST['filename']
+    existingPath = request.POST['existingPath']
+    end = request.POST['end']
+    nextSlice = request.POST['nextSlice']
+    if file=="" or fileName=="" or existingPath=="" or end=="" or nextSlice=="":
+        res = JsonResponse({'data':'Hata Oluştu.'})
+        return res
+    else:
+        if existingPath == 'null':
+            document = Documents()
+            document.path = file
+            document.eof = end
+            document.name = fileName
+            path = "%s/%s.%s" % ("media",document.docID, fileName.split('.')[-1])
+            document.path = path
+            with open(path, 'wb+') as destination: 
+                destination.write(file)
+            document.save()
+            SearchHistory.objects.create(document=document, query=query)
+            if int(end):
+                res = JsonResponse({'data':'Yükleme Tamamlandı.','existingPath': path})
+            else:
+                res = JsonResponse({'existingPath': path})
+            return res
 
-      # file_path = t_obj.thesis_doc.field.storage.base_location
-      #file_path = t_obj.documents_doc.file.name
-      #path, file_name = os.path.split(file_path)
-      #Documents.objects.create()
-
-      return redirect('documents_index')
+        else:
+            document = Documents.objects.get(path=existingPath)
+            if document.name == fileName:
+                if not document.eof:
+                    with open(existingPath, 'ab+') as destination: 
+                        destination.write(file)
+                    if int(end):
+                        document.eof = int(end)
+                        document.save()
+                        res = JsonResponse({'data':'Yükleme Tamamlandı.','existingPath':document.path})
+                    else:
+                        res = JsonResponse({'existingPath':document.path})    
+                    return res
+                else:
+                    res = JsonResponse({'data':'EOF found. Invalid request'})
+                    return res
+            else:
+                res = JsonResponse({'data':'No such file exists in the existingPath'})
+                return res
 
   context = {'document': form}
   return render(request, 'documents/search.html', context)

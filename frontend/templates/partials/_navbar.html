@@ -1,6 +1,6 @@
 {% load static %}
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+<nav style="background-color: #10284e;" class="navbar navbar-expand-lg navbar-dark sticky-top">
     <div class="container">
         <a class="navbar-brand" href="/">
             <img src="{% static 'assets/img/logo.png' %}" width="145" height="40" alt="foid"/>
@@ -40,7 +40,7 @@
                     {% endif %}
                 </li>
                 <li class="nav-item active mr-3">
-                    <a href="javascript:{document.getElementById('logout').submit()}" class="nav-link"><i class="fas fa-sign-out-alt"></i></a>
+                    <a title="Çıkış" href="javascript:{document.getElementById('logout').submit()}" class="nav-link"><i class="fas fa-sign-out-alt"></i></a>
                     <form action="{% url 'logout' %}" method="POST" id="logout">
                         {% csrf_token %}
                         <input type="hidden">

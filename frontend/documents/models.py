@@ -19,11 +19,12 @@ class CustomManager(models.Manager):
         return query
 
 class Documents(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
     name = models.CharField(max_length=250)
     docID = models.UUIDField(default=generate_uuid, editable=False, unique=True)
     metadata = models.TextField(null=True,  blank=True)
-    path = models.FileField(upload_to=get_file_path,null=True,blank=True,)
+    path = models.TextField(null=True,blank=True)
+    eof = models.BooleanField()
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     objects = CustomManager()
