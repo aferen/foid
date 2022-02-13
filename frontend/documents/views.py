@@ -12,7 +12,7 @@ import os
 from django.http import JsonResponse
 from documents.models import *
 from django.contrib.auth.decorators import login_required
-
+import requests
 
 @login_required
 def index(request):
@@ -39,6 +39,10 @@ def search(request):
   user = request.user
   form = DocumentsForm(user=user)
   if request.method == 'POST':  
+    projectPath = os.path.abspath(os.path.dirname(__name__))
+    documentDir = "media/document"
+    if not os.path.exists(os.path.join(projectPath, documentDir)):
+      os.makedirs(os.path.join(projectPath, documentDir))
     file = request.FILES['file'].read()
     query = request.POST['query']
     fileName= request.POST['filename']
@@ -54,7 +58,7 @@ def search(request):
             document.path = file
             document.eof = end
             document.name = fileName
-            path = "%s/%s.%s" % ("media",document.docID, fileName.split('.')[-1])
+            path = "%s/%s.%s" % ("media/document",document.docID, fileName.split('.')[-1])
             document.path = path
             with open(path, 'wb+') as destination: 
                 destination.write(file)
@@ -62,6 +66,9 @@ def search(request):
             SearchHistory.objects.create(document=document, query=query)
             if int(end):
                 res = JsonResponse({'data':'Yükleme Tamamlandı.','existingPath': path})
+                post_data = {'docID': document.docID}
+                response = requests.post('http://localhost:8080/search', data=post_data)
+                content = response.content
             else:
                 res = JsonResponse({'existingPath': path})
             return res
@@ -76,6 +83,9 @@ def search(request):
                         document.eof = int(end)
                         document.save()
                         res = JsonResponse({'data':'Yükleme Tamamlandı.','existingPath':document.path})
+                        post_data = {'docID': document.docID}
+                        response = requests.post('http://localhost:8080/search/', data=post_data)
+                        content = response.content
                     else:
                         res = JsonResponse({'existingPath':document.path})    
                     return res
