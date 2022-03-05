@@ -84,13 +84,7 @@ def logout(request):
 def index(request):
   users = User.objects.order_by('username')
 
-  paginator = Paginator(users, 20)
-  page = request.GET.get('page')
-  paged_users = paginator.get_page(page)
-
-  context = {
-    'users': paged_users
-  }
+  context = {'users': users}
   return render(request, 'users/index.html', context)
 
 @is_admin
