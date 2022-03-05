@@ -56,6 +56,15 @@ class ObjectDTO():
     def reprJSON(self):
         return dict(id=self.id, name=self.name, position=self.position, score=self.score)
         
+class Position():
+    def __init__(self, x1,x2,y1,y2):
+        self.x1=x1
+        self.x2=x2
+        self.y1=y1
+        self.y2=y2
+
+    def reprJSON(self):
+        return dict(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
 
 class ComplexEncoder(json.JSONEncoder):
     def default(self, obj):
