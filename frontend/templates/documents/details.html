@@ -10,17 +10,21 @@
 
 
 <div class="d-flex justify-content-center">
-	<div class="row col-md-10 pr-0">
+	<div class="col-md-10">
 		{% include 'partials/_alerts.html' %}
-		<div class="col-md-12 pr-0">
-				<span><b>Doküman Adı:</b> {{document.name}}</span>
+		<div class="col-md-12">
+			<div class="row">
+				<div class="col-md-6">
+				<span><b>Doküman Adı:</b> {{document.name}}</span></div>
+				<div class="col-md-6">
 				<a title="Geri" class="btn btn-dark ml-1 mb-1 btn-sm float-right text-white" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
-				<a title="Dokümanı Göster" class="btn btn-success ml-1 mb-1 btn-sm float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
+				<a title="Dokümanı Göster" class="btn btn-success ml-1 mb-1 btn-sm float-right" href="http://localhost:8080/document/{{document.docID.hex}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
 				<a title="Arama Sil" class="open-document-popup btn btn-danger ml-1 mb-1 btn-sm float-right" data-popup-url="{% url 'documents_delete' document.id %}" href="{% url 'documents_delete' document.id %}"><i class="fas fa-trash-alt"></i></a>
-				<a title="Yeni Arama" class="btn btn-primary ml-1 mb-1 btn-sm float-right" href="{% url 'documents_searchById' document.id %}"><i class="fas fa-search-plus"></i></a>
-
-				<table class="table border table-hover table-sm">
-					<thead class="thead-light">
+				<a title="Yeni Arama" class="btn btn-primary ml-1 mb-1 btn-sm float-right" href="{% url 'documents_searchById' document.id %}"><i class="fas fa-plus"></i></a>
+			</div>
+			</div>
+				<table id="searchDetailTable" class="table table-striped table-sm table-bordered" cellspacing="0">
+					<thead>
 						<tr>
 							<th>Sorgu</th>
 							<th>Arama Tarihi</th>
@@ -28,20 +32,40 @@
 							<th></th>
 						</tr>
 					</thead>
+					<tbody>
 					{% for history in searchHistory %}
-					<tr style="cursor: pointer;">
+					<tr>
 						<td>{{history.query}}</td>
 						<td>{{history.created_date}}</td>
-						<td></td>
+						<td>{{history.resultMessage}}</td>
 						<td>
 							<a title="Arama Kaydı Sil" class="open-document-popup btn btn-danger btn-sm ml-1 float-right" data-popup-url="{% url 'documents_deleteSearchHistory' history.id %}" href="{% url 'documents_deleteSearchHistory' history.id %}"><i class="fas fa-trash-alt"></i></a>
-							<a title="Arama Sonucu İndir" class="btn btn-info btn-sm ml-1 float-right text-white" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-download"></i></a>
-							<a title="Arama Sonucu Göster" class="btn btn-success btn-sm ml-1 float-right" href="http://localhost:8000/media/{{document.path}}" target="_blank"><i class="fas fa-file-alt"></i></a>
+							{% if history.resultDocID %}
+								<a title="Arama Sonucu" class="btn btn-secondary btn-sm ml-1 float-right" href="http://localhost:8080/result/{{document.docID.hex}}/{{history.resultDocID.hex}}" target="_blank"><i class="fas fa-file-pdf"></i></a>
+								<button  type="button" data-doc-id="{{document.docID.hex}}" data-result-doc-id="{{history.resultDocID.hex}}" data-result-page-list="{{history.resultPageList}}" data-result-total-page="{{history.resultTotalPage}}" title="Arama Sonucu Göster" class="showResult btn btn-info btn-sm ml-1 float-right"><i class="fas fa-file-alt"></i></button>
+							{% endif %}	
 						</td>
 					</tr>
 					{% endfor %}
+				</tbody>
 				</table>
 		</div>
+		<div id="pageControllerDP" style="display: none !important;" class="form-row d-flex justify-content-center align-items-center">
+			<div class="col-xs-2">
+				<div class="input-group">
+					<div class="input-group-prepend">
+						<button id="pageControllerPreviousDP" class="btn btn-info" type="button"><i class="fas fa-arrow-left"></i></button>
+					</div>
+					<input id="pageNumberDP" style="width: 60px; text-align: center;" type="text" class="form-control">
+					<div class="input-group-append">
+						<span id="resultTotalPageDP" class="input-group-text"></span>
+						<button id="pageControllerNextDP" class="btn btn-info" type="button"><i class="fas fa-arrow-right"></i></button>
+					</div>
+				</div>
+			</div>
+		</div>   
+		<div id="resultViewerDP"></div>
+		<span id="resultPageListDP" style="display: none;"></span>
 	</div>
 </div>
 {% include "documents/popup.html" %}
@@ -49,9 +73,88 @@
 <script type="text/javascript">
     $(function() {
         $( document ).ready(function() {
+			$('#searchDetailTable').DataTable( {
+                "language": {
+                    "lengthMenu": "Göster _MENU_",
+                    "info": "_TOTAL_ kayıttan _START_ ile _END_ arası gösteriliyor",
+                    "zeroRecords": "Kayıt Bulunamadı.",
+                    "infoEmpty": "Kayıt Bulunamadı",
+                    "infoFiltered": "(toplam _MAX_ kayıttan filtrelendi)",
+                    "search": "Ara",
+                    "paginate": {
+                        "next": "Sonraki",
+                        "previous": "Önceki"
+                    }
+                },
+                "aLengthMenu": [[5,10,25, 50, 75, 100, -1], [5,10,25, 50, 75, 100, "Hepsi"]],
+                "iDisplayLength": 5,
+                "order": [[1, 'desc']]
+            } );
+	
             document.getElementById("deleteDocumentHeader").style.display= 'none';
             document.getElementById("deleteSearchHistoryHeader").style.display= 'none';
+
         });
+		$(document).on("click", ".showResult", function (e) {
+			e.preventDefault();
+			document.getElementById('resultViewerDP').style.display= '';
+			document.getElementById('pageControllerDP').style.display= '';
+			var docID = $(this).data('doc-id');
+			var resultDocID = $(this).data('result-doc-id');
+			var resultTotalPage = $(this).data('result-total-page')
+			$('#pageNumberDP').off('input keydown mousedown mouseup select contextmenu drop');
+			$("#pageNumberDP").inputFilter(function(value) {
+				return /^\d*$/.test(value) && (value === "" || parseInt(value) <= parseInt(resultTotalPage) && (value === "" || parseInt(value) >  0));
+			});
+			$("#pageNumberDP").val(1)
+			var resultPageList = $(this).data('result-page-list');
+			$('#resultTotalPageDP').text("/ " + resultTotalPage);
+			$('#resultPageListDP').text(resultPageList)
+			var pages =  String(resultPageList).includes(",") ? resultPageList.split(",") : $('#resultPageListDP').text();
+			var fileUrl = `http://localhost:8080/result/${docID}/${resultDocID}`
+			PDFObject.embed(fileUrl, "#resultViewerDP", {forceIframe: true, page: pages[0]});   
+		});
+
+		$('#pageControllerPreviousDP').on('click', (event) => {
+			var value = $("#pageNumberDP").val();
+			value = !value ? 2 : value;
+			var newPageIndex = parseInt(value) - 1;
+			resultTotalPage = parseInt($('#resultTotalPageDP').text().substring(2));
+			newPageIndex = newPageIndex < 1 ? resultTotalPage : newPageIndex;
+			updatePdfViewer(newPageIndex)
+		});
+		
+		$('#pageControllerNextDP').on('click', (event) => {
+			var value = $("#pageNumberDP").val();
+			value = !value ? 0 : value;
+			var newPageIndex = parseInt(value) + 1;
+			resultTotalPage = parseInt($('#resultTotalPageDP').text().substring(2));
+			newPageIndex = newPageIndex > resultTotalPage ? 1 : newPageIndex;
+
+			updatePdfViewer(newPageIndex)
+		});
+		
+		$('#pageNumberDP').keyup(function(event) {
+			var value = $("#pageNumberDP").val();
+			if(value) {
+				var newPageIndex = parseInt(value);
+				updatePdfViewer(newPageIndex)
+			}
+
+		});
+
+		function updatePdfViewer(pageIndex) {
+			$("#pageNumberDP").val(pageIndex)
+			var resultPageList = $('#resultPageListDP').text()
+			var pages =  resultPageList.includes(",") ? $('#resultPageListDP').text().split(",") : $('#resultPageList').text();
+			var pdfviewer = document.getElementById('resultViewerDP');//get the viewer element
+			var contenttag =  pdfviewer.getElementsByTagName("iframe")[0]//got this from pdfobject code
+			var fileUrl = $(contenttag,this).attr('src').split('#')[0];
+			PDFObject.embed(fileUrl, "#resultViewerDP", {forceIframe: true, page: pages[pageIndex-1]});   
+		}
+
+
+
         $(document).on("click", ".open-document-popup", function (e) {
             e.preventDefault();
             var $popup = $("#documentPopup");
@@ -69,6 +172,21 @@
             document.getElementById("deleteDocumentHeader").style.display= 'none';
             document.getElementById("deleteSearchHistoryHeader").style.display= 'none';
         });    
+
+        $.fn.inputFilter = function(inputFilter) {
+            return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function() {
+              if (inputFilter(this.value)) {
+                this.oldValue = this.value;
+                this.oldSelectionStart = this.selectionStart;
+                this.oldSelectionEnd = this.selectionEnd;
+              } else if (this.hasOwnProperty("oldValue")) {
+                this.value = this.oldValue;
+                this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+              } else {
+                this.value = "";
+              }
+            });
+        };
     });
   </script>
 
