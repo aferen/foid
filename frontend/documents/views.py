@@ -27,75 +27,13 @@ def index(request):
     if searchHistory:
       doc.query = searchHistory.query
       doc.modified_date = searchHistory.modified_date
-    
-  paginator = Paginator(documents, 20)
-  page = request.GET.get('page')
-  paged_documents = paginator.get_page(page)
 
-  context = {'documents': paged_documents}
+  context = {'documents': documents}
   return render(request, 'documents/index.html', context)
 
 def search(request):
   user = request.user
   form = DocumentsForm(user=user)
-  if request.method == 'POST':  
-    projectPath = os.path.abspath(os.path.dirname(__name__))
-    documentDir = "media/document"
-    if not os.path.exists(os.path.join(projectPath, documentDir)):
-      os.makedirs(os.path.join(projectPath, documentDir))
-    file = request.FILES['file'].read()
-    query = request.POST['query']
-    fileName= request.POST['filename']
-    existingPath = request.POST['existingPath']
-    end = request.POST['end']
-    nextSlice = request.POST['nextSlice']
-    if file=="" or fileName=="" or existingPath=="" or end=="" or nextSlice=="":
-        res = JsonResponse({'data':'Hata Oluştu.'})
-        return res
-    else:
-        if existingPath == 'null':
-            document = Documents()
-            document.path = file
-            document.eof = end
-            document.name = fileName
-            path = "%s/%s.%s" % ("media/document",document.docID, fileName.split('.')[-1])
-            document.path = path
-            with open(path, 'wb+') as destination: 
-                destination.write(file)
-            document.save()
-            SearchHistory.objects.create(document=document, query=query)
-            if int(end):
-                res = JsonResponse({'data':'Yükleme Tamamlandı.','existingPath': path})
-                post_data = {'docID': document.docID}
-                response = requests.post('http://localhost:8080/search', data=post_data)
-                content = response.content
-            else:
-                res = JsonResponse({'existingPath': path})
-            return res
-
-        else:
-            document = Documents.objects.get(path=existingPath)
-            if document.name == fileName:
-                if not document.eof:
-                    with open(existingPath, 'ab+') as destination: 
-                        destination.write(file)
-                    if int(end):
-                        document.eof = int(end)
-                        document.save()
-                        res = JsonResponse({'data':'Yükleme Tamamlandı.','existingPath':document.path})
-                        post_data = {'docID': document.docID}
-                        response = requests.post('http://localhost:8080/search/', data=post_data)
-                        content = response.content
-                    else:
-                        res = JsonResponse({'existingPath':document.path})    
-                    return res
-                else:
-                    res = JsonResponse({'data':'EOF found. Invalid request'})
-                    return res
-            else:
-                res = JsonResponse({'data':'No such file exists in the existingPath'})
-                return res
-
   context = {'document': form}
   return render(request, 'documents/search.html', context)
 
@@ -107,24 +45,8 @@ def searchById(request, document_id):
     document = Documents.objects.get(Q(id=document_id), Q(user=user))
   else:
     document = Documents.objects.get(Q(id=document_id))
-  form.id = document.id
-  form.path = document.id
-  form.docID = document.docID
-  if request.method == 'POST':
-    form = DocumentsForm(request.POST, request.FILES, user=user)
-    if form.is_valid():
-      query = form.data.get('query')
-      SearchHistory.objects.create(document=document, query=query)
-
-      # file_path = t_obj.thesis_doc.field.storage.base_location
-      #file_path = t_obj.documents_doc.file.name
-      #path, file_name = os.path.split(file_path)
-      #Documents.objects.create()
-
-      return redirect('documents_detail', document_id)
-
-  context = {'document': form, 'document_id': form.id}
-  return render(request, 'documents/searchById.html', context)
+  context = {'document': document, 'newSearch': False}
+  return render(request, 'documents/search.html', context)
 
 @login_required
 def detail(request, document_id):

@@ -5,7 +5,7 @@ class DocumentsForm(forms.ModelForm):
     query = forms.CharField()
     class Meta:
         model = Documents
-        fields = ['path', 'user']
+        fields = ['docPath', 'user']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
