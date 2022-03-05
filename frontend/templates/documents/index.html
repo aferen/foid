@@ -36,7 +36,7 @@
                             Anonim
                         {% endif %}</td>
                     {% endif %}
-                    <td>
+                    <td class="float-right">
                         <a title="Yeni Arama" class="btn btn-sm mt-1 btn-primary" href="{% url 'documents_searchById' item.id %}"><i class="fas fa-plus"></i></a>
                         <a title="Arama Detayları" class="btn btn-sm mt-1 btn-info" href="{% url 'documents_detail' item.id %}"><i class="fas fa-info-circle"></i></a>
                         <a title="Arama Sil"class="open-document-popup btn btn-sm mt-1 btn-danger" data-popup-url="{% url 'documents_delete' item.id %}" href="{% url 'documents_delete' item.id %}"><i class="fas fa-trash-alt"></i></a>
