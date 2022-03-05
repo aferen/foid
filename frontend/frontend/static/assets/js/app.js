@@ -41,10 +41,13 @@ class FileUpload {
             formData.append('end', end)
             formData.append('existingPath', existingPath);
             formData.append('nextSlice', nextChunk);
+        } else {
+            formData.append('docID', docID);
         }
+        var user = $("#user").text()
+        formData.append('user', user);
         var query = $("#query").val()
         formData.append('query', query);
-        formData.append('docID', docID);
         if(!docID) {
             $('#statusMessage').text("Dosya yükleniyor...")
             $.ajax({

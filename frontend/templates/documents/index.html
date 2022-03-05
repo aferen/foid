@@ -30,7 +30,7 @@
                     <td>{{item.modified_date}}</td>
                     {% if user.is_admin %}
                     <td>
-                        {% if item.user|length > 0 %}
+                        {% if item.user %}
                             {{ item.user }}
                         {% else %}
                             Anonim
@@ -55,6 +55,7 @@
 <script type="text/javascript">
     $(function() {
         $( document ).ready(function() {
+            var index = $('#documentTable').find('th:last').index();
             $('#documentTable').DataTable( {
                 "language": {
                     "lengthMenu": "Göster _MENU_",
@@ -70,7 +71,7 @@
                 },
                 "aLengthMenu": [[5,10,25, 50, 75, 100, -1], [5,10,25, 50, 75, 100, "Hepsi"]],
                 "iDisplayLength": 10,
-                "order": [[2, 'desc']]
+                "order": [[index, 'desc']]
             } );
             document.getElementById("deleteDocumentHeader").style.display= 'none';
             document.getElementById("deleteSearchHistoryHeader").style.display= 'none';

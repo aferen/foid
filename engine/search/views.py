@@ -5,7 +5,7 @@ from matplotlib import image
 from rest_framework import status
 from sqlalchemy import null
 from .serializers import DocumentSerializer, ResultSerializer
-from .models import Documents, SearchHistory, Result
+from .models import Documents, SearchHistory, Result, User
 from .metadata import DocumentDTO, PageDTO, ImageDTO, ObjectDTO, ComplexEncoder, NumpyEncoder, Position
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -81,15 +81,17 @@ def search(request):
       os.makedirs(os.path.join(projectPath, documentDir))
     
     query = request.POST['query']
+    username = request.POST['user']
     docID = request.POST.get('docID')
-    if docID == "null":
+
+    if not docID:
         file = request.FILES['file'].read()
         fileName= request.POST['filename']
         existingPath = request.POST['existingPath']
         end = request.POST['end']
         nextSlice = request.POST['nextSlice']
     
-    if docID != "null":
+    if docID:
       searchHistory = init(docID, query)
       if searchHistory:
         resultDocUrl = "%s://%s/result/%s/%s" % (request.scheme, request.get_host(),docID, searchHistory.resultDocID)
@@ -105,7 +107,10 @@ def search(request):
         return res
     else:
         if existingPath == 'null':
+            user = User.objects.filter(username=username)
             document = Documents()
+            if user:
+                document.user = user
             document.docPath = file
             document.eof = end
             document.name = fileName
