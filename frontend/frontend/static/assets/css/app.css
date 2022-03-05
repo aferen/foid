@@ -47,3 +47,14 @@ small {
     margin: 5px; 
     border: 1rem solid rgba(0,0,0,.1);
 }
+
+
+/* Login Page */
+.vertical-center {
+    min-height: 100%;
+    min-height: 90vh;
+    display: grid;
+    align-items: center;
+    padding: 10px;
+  }
+

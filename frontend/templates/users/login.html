@@ -1,31 +1,77 @@
 {% extends 'base.html' %}
 
-{% block title %} | Giriş {% endblock %}
-
+{% block title %} {% endblock %}
+{% load static %}
 {% block content %}
-<div class="container m-5">
-  <div class="row">
-    <div class="col-md-4 mx-auto">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h4><i class="fas fa-sign-in-alt"></i> Giriş</h4>
+<div class="container vertical-center">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;" class="card-group mb-0">
+        <div class="card p-4">
+          <div class="card-body">
+            <h2 style="margin-bottom: 30px;"  class="text-primary">Giriş</h2>
+            <div class="row justify-content-center">
+              <img src="{% static 'assets/img/avatar.svg' %}" width="75"/>
+            </div>
+            <p class="text-muted"></p>
+            {% include 'partials/_alerts.html' %}
+            <form action="{% url 'login' %}" method="POST">
+              {% csrf_token %}
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="fa fa-user"></i></span>
+                </div>
+                <input type="text" name="username" class="form-control" placeholder="Kullanıcı Adı">
+              </div>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="fa fa-lock"></i></span>
+                </div>
+                <input type="password" name="password" class="form-control" placeholder="Şifre">
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <!-- <button type="button" class="btn btn-link px-0">Şifremi Unuttum</button> -->
+                </div>
+                <div class="col-6">
+                  <button type="submit" class="btn btn-primary px-4 float-right">Giriş</button>
+                </div>
+              </form> 
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          {% include 'partials/_alerts.html' %}
-          <form action="{% url 'login' %}" method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-              <label for="username">Kullanıcı adı</label>
-              <input type="text" name="username" class="form-control" required>
-            </div>
-
-            <div class="form-group">
-              <label for="password2">Şifre</label>
-              <input type="password" name="password" class="form-control" required>
-            </div>
-
-            <input type="submit" value="Giriş" class="btn btn-primary float-right">
-          </form>
+        <div class="card p-4 text-white bg-primary py-4 d-md-down-none">
+          <div class="card-body">
+           <h2>Kayıt</h2>
+            <p class="text-muted"></p>
+            <form action="{% url 'register' %}" method="POST">
+              {% csrf_token %}
+              <div class="input-group mb-3">
+                <input type="text" name="first_name" class="form-control" placeholder="İsim">
+              </div>
+              <div class="input-group mb-3">
+                <input type="text" name="last_name" class="form-control" placeholder="Soyisim">
+              </div>
+              <div class="input-group mb-3">
+                <input type="text" name="username" class="form-control" placeholder="Kullanıcı Adı">
+              </div>
+              <div class="input-group mb-3">
+                <input type="email" name="email" class="form-control" placeholder="Email">
+              </div>
+              <div class="input-group mb-3">
+                <input type="password" name="password" class="form-control" placeholder="Şifre">
+              </div>
+              <div class="input-group mb-3">
+                <input type="password" name="confirm_password" class="form-control" placeholder="Şifre Tekrar">
+              </div>
+              <div class="row">
+                <div class="col-6">
+                </div>
+                <div class="col-6">
+                  <button type="submit" class="btn btn-primary px-4 float-right">Kayıt Ol</button>
+                </div>
+              </form> 
+          </div>
         </div>
       </div>
     </div>
