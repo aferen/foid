@@ -107,9 +107,9 @@ def search(request):
         return res
     else:
         if existingPath == 'null':
-            user = User.objects.filter(username=username)
             document = Documents()
-            if user:
+            if username != "null":
+                user = User.objects.get(username=username)
                 document.user = user
             document.docPath = file
             document.eof = end
