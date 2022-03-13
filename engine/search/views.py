@@ -73,8 +73,35 @@ def getResultDocument(request,   *args, **kwargs):
 
 @api_view(['POST'])
 def search(request):
-  if request.method == 'POST':  
+  if request.method == 'POST':
+
+    query = """index=metadata "pages{}.images{}.objects{}.name"=person"""
+    # ----------------- GET SEARCH SPLUNK ------------------------------
+    url = "https://localhost:8089/services/search/jobs/export"
+    params = {'search': f'search {query}', 'output_mode': 'csv'}
+    r = requests.get(url, params=params, auth=('dedicoder', 'asdfgwer1'), verify=False)
+    data = r.content.decode('utf-8').replace('""', '"')
+    data = data.split("\n")
+    js = ''' { "rows" : [ '''
+    for x in range(1, len(data)):
+        spl = data[x].split(",")
+        for y in range(7, len(spl)):
+            if (y == 7):
+                spl[y] = spl[y][1:]
+            elif (y == len(spl) - 1):
+                spl[y] = spl[y][1:-1]
+            js = js + spl[y] + ","
+    js = js[0:-1]
+    js = js + "]}"
+
+    #print(js)
+    responseJSon = json.loads(js)
+    print("-------------")
+    print(responseJSon['rows'][0]['size'])
+
+
     serializer = DocumentSerializer(data=request.data)
+
     projectPath = os.path.abspath(os.path.dirname(__name__))
     documentDir = "media/document"
     if not os.path.exists(os.path.join(projectPath, documentDir)):
@@ -209,6 +236,14 @@ def find(docID,docPath):
     json_data = json.dumps(document.reprJSON(), cls=NumpyEncoder)
     metadata_id=uuid.uuid4().hex
     metadataPath= "%s/%s.%s" % ("media/metadata",metadata_id, "json")
+    """ #------------ Upload metadata Splunk --------------------
+    upload_json_data = {"event": json.dumps(document.reprJSON(), cls=NumpyEncoder)}
+    upload_json_data = json.dumps(upload_json_data, cls=NumpyEncoder)
+    url = "https://localhost:8088/services/collector/event"
+    headers = {"Authorization": "Splunk 6e305e21-1550-48d6-8f73-a2b5a744ebbc"}
+    r = requests.post(url, data=upload_json_data, headers=headers, verify=False)
+    print(r.content)
+    """
     with open(metadataPath, 'w') as f:
         f.write(json_data)
     return metadata_id, metadataPath
