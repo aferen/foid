@@ -135,7 +135,7 @@ def search(request):
     else:
         if existingPath == 'null':
             document = Documents()
-            if username != "null":
+            if username != "null" and username != 'AnonymousUser':
                 user = User.objects.get(username=username)
                 document.user = user
             document.docPath = file
