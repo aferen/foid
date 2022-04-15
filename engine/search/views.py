@@ -16,6 +16,7 @@ from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import resolve1
 
+import re
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import random
@@ -33,7 +34,9 @@ import shutil
 import json
 import shutil
 import requests
+import numpy as np
 from django.http import JsonResponse
+import pickle
 
 from pdf2image import convert_from_path
 from detectron2.config import get_cfg
@@ -83,6 +86,7 @@ def search(request):
     query = request.POST['query']
     username = request.POST['user']
     docID = request.POST.get('docID')
+    advancedSearch = request.POST.get('advancedSearch')
 
     if not docID:
         file = request.FILES['file'].read()
@@ -92,7 +96,7 @@ def search(request):
         nextSlice = request.POST['nextSlice']
     
     if docID:
-      searchHistory = init(docID, query)
+      searchHistory = init(docID, query,advancedSearch)
       if searchHistory:
         resultDocUrl = "%s://%s/result/%s/%s" % (request.scheme, request.get_host(),docID, searchHistory.resultDocID)
         message = "Arama Tamamlandı. " + searchHistory.resultMessage
@@ -155,30 +159,76 @@ def searchById(request):
         if serializer.is_valid():
             docID = request.data['docID']
             query = request.data['query']
-            result = init(docID, query)
+            advancedSearch = request.POST.get('advancedSearch')
+            result = init(docID, query, advancedSearch)
             if result:
                 serializer = ResultSerializer(result)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def init(docID, query):
+def init(docID, query, advancedSearch):
     document = Documents.objects.get(Q(docID=docID))
     if document:
         # searchHistory = SearchHistory.objects.filter(Q(document=document)).order_by('pk').last()
         docPath = document.docPath
         metadataId = document.metadataID
+
         if not metadataId:
             metadataId, metadataPath = find(docID,docPath)
             document.metadataID = metadataId
             document.metadataPath = metadataPath
             document.save()
-        result =  filter(docID,metadataId, query)
-        if result:
-            return SearchHistory.objects.create(document=document, query=query, resultDocID=result.docID, resultDocPath=result.docPath, resultTotalObject=result.totalObject, resultTotalImage=result.totalImage, resultTotalPage=result.totalPage, resultPageList=result.pageList, resultMessage=result.message)
+
+        if advancedSearch == "true":
+            advancedSearch = True
+            query = query.replace(" ", "")
+            querySentence = createQuerySentence(query)
+            result =  advancedfilter(docID,metadataId, querySentence)
         else:
-            SearchHistory.objects.create(document=document, query=query, resultMessage="Sonuç Bulunamadı")
+            advancedSearch = False
+            result =  filter(docID,metadataId, query)
+
+        if result:
+            return SearchHistory.objects.create(document=document, query=query, resultDocID=result.docID, resultDocPath=result.docPath, resultTotalObject=result.totalObject, resultTotalImage=result.totalImage, resultTotalPage=result.totalPage, resultPageList=result.pageList, resultMessage=result.message, isAdvancedSearch=advancedSearch)
+        else:
+            SearchHistory.objects.create(document=document, query=query, resultMessage="Sonuç Bulunamadı",isAdvancedSearch=advancedSearch)
+    
     return None
+
+def createQuerySentence(query):
+    words = re.split('&|\|',query)
+    lastCon=""
+    wordList=[]
+    for i in range(0,len(words)):
+        word=words[i].replace("(","").replace(")","")
+        if word not in wordList:
+            wordList.append(word)
+            if "!" in word:
+                con=word[1:]+"!="+word[1:]
+                index = query.index(word)
+                if query[index-1] == "&" or query[index+len(word)] == "&":
+                    lastCon=" and (%s != %s)%s" % (word[1:],word[1:],lastCon)
+                else:
+                    lastCon=" or (%s != %s)%s" % (word[1:],word[1:],lastCon)
+            else:
+                con=word+"=="+word
+                if lastCon[-1:] == ")" or not lastCon:
+                    lastCon="%s and (%s == 1" % (lastCon,word)
+                else:
+                    lastCon="%s or %s == 1" % (lastCon,word)
+            query = query.replace(word,con)
+
+    query = query.replace("&"," and ").replace("|"," or ")
+    query="(%s)" % (query)
+    print(query)
+    if lastCon[-1:] != ")":
+        lastCon="%s)" % (lastCon)
+    querySentence=query+lastCon
+    print(querySentence)
+    #querySentence="((boat==boat and person==person) or (clock==clock)) and ((boat == 1 and person == 0) or (boat == 0 and person == 1) or clock == 1)"
+    return querySentence
+
 
 def find(docID,docPath):
     mp.set_start_method("spawn", force=True)  
@@ -287,6 +337,59 @@ def filter(docID,metadataId, query):
     
     return createResultDocument(docID, metadata, len(df.index), len(df.groupby(['pages.images.id'])))
 
+
+def advancedfilter(docID,metadataId, querySentence):
+    tempOutputDir = "%s/%s" % ("media/tempOutput",docID)
+    prepareFolderStructure(tempOutputDir)
+    if isinstance(metadataId, uuid.UUID):
+        metadataId = metadataId.hex
+    metadataPath= "%s/%s.%s" % ("media/metadata",metadataId, "json")
+    with open(metadataPath) as data_file:    
+        metadata = json.load(data_file)  
+
+    df = pd.json_normalize(
+    metadata, 
+    record_path =['pages', 'images', 'objects'],  
+    meta=[
+        'id',
+        ['pages', 'id'],
+        ['pages', 'pageNumber'],
+        ['pages', 'images', 'id'], 
+        ['pages', 'images', 'position']
+    ],
+    record_prefix='pages.images.objects.')
+
+    df.loc[:, 'temp1'] = 1
+    df.loc[:, 'temp2'] = ''
+    df = df.astype({"pages.images.position": str})
+    df2 = df.pivot_table('temp1', ['id','pages.id', 'pages.pageNumber', 'pages.images.id', 'pages.images.position','pages.images.objects.position.x1','pages.images.objects.position.x2','pages.images.objects.position.y1','pages.images.objects.position.y2','temp2'], 'pages.images.objects.name')
+    df2.columns = [i.replace(" ","") for i in df2.columns]
+    df2.reset_index(inplace=True)
+
+    for index in range(10,len(df2.columns)):
+        df4 = df2.groupby('pages.images.id')[df2.columns[index]].apply(set).to_dict()
+        def control(row):
+            match = row[df2.columns[index]] in df4[row['pages.images.id']]
+            if match:
+                df2.loc[((df2[df2.columns[3]] == row[3]) & (np.isnan(df2[df2.columns[index]]))), df2.columns[index]] = 0
+            return match
+            # return match2 or (match1 and (row['Num1'] in range(5, 13)))
+        df2.apply(control, axis=1).astype(int)
+    print(docID)
+    df2.query(querySentence,inplace = True)
+    if df2.empty:
+        return None
+    df2 = df2.reset_index()
+    for index, row in df2.iterrows():
+        objectPosition=[row['pages.images.objects.position.x1'],row['pages.images.objects.position.x2'],row['pages.images.objects.position.y1'],row['pages.images.objects.position.y2']]
+        drawBox(docID,row['pages.images.id'], objectPosition)
+        imagePositionObject = json.loads(row['pages.images.position'].replace("'","\""))
+        imagePosition = [imagePositionObject['x1'],imagePositionObject['x2'],imagePositionObject['y1'],imagePositionObject['y2']]
+        addNewImageToPage(docID,row['pages.id'], row['pages.images.id'],imagePosition)
+    
+    return createResultDocument(docID, metadata, len(df2.index), len(df2.groupby(['pages.images.id'])))
+
+
 def drawBox(docID, imgId, box):
     imgPath = "%s/%s/%s/%s.%s" % ("media/output",docID,"images",imgId, "jpg")
     outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images",imgId, "jpg")
@@ -331,12 +434,14 @@ def createResultDocument(docID, data, totalObject, totalImage):
 
 def addNewImageToPage(docID,pageID, imageID, position):
     pagePath = "%s/%s/%s/%s.%s" % ("media/output",docID,"pages",pageID, "jpg")
+    outputPagePath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"pages",pageID, "jpg")
     imagePath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images",imageID, "jpg")
+    if os.path.isfile(outputPagePath):
+        pagePath = outputPagePath
     page = Image.open(pagePath)
     image = Image.open(imagePath)
     tempPage = page.copy()
     tempPage.paste(image, (int(position[0]), int(position[1]), int(position[2]), int(position[3])))
-    outputPagePath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"pages",pageID, "jpg")
     tempPage.save(outputPagePath, quality=100)
 
 def createPositionObject(position):

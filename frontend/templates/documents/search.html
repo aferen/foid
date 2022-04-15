@@ -16,9 +16,9 @@
                 <div class="col-md-2 mb-3 mt-lg-2">
                     <div class="form-row">
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" id="advanceSearch" class="custom-control-input"/>
-                            <label class="custom-control-label" for="advanceSearch" style="font-weight: normal;">Gelişmiş Arama</label>
-                            <a id="advanceSearchInfo" style="cursor: pointer;" class="text-primary"><i class="fas fa-info-circle"></i></a>
+                            <input type="checkbox" id="advancedSearch" class="custom-control-input"/>
+                            <label class="custom-control-label" for="advancedSearch" style="font-weight: normal;">Gelişmiş Arama</label>
+                            <a id="advancedSearchInfo" style="cursor: pointer;" class="text-primary"><i class="fas fa-info-circle"></i></a>
                     </div>
                       
                     </div>
@@ -31,7 +31,7 @@
                     <button type="button" id="resetSearch" class="btn btn-dark"><i class="fas fa-broom"></i></button>
                 </div>
             </div>  
-            <div id="advanceSearchModal" style="display:none" class="alert alert-dark col-md-12" role="alert">
+            <div id="advancedSearchModal" style="display:none" class="alert alert-dark col-md-12" role="alert">
                 <h4 class="alert-heading">Well done!</h4>
                 <p>Aww yeah, you successfully read this important alert message. This example text is going to run a bit longer so that you can see how spacing within an alert works with this kind of content.</p>
                 <hr>
@@ -96,21 +96,21 @@
       var fileName = $(this).val().split("\\").pop();
       $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
     });
-    $('#advanceSearch').click(function() {  
+    $('#advancedSearch').click(function() {  
         if (this.checked) {
             $("#query").attr("placeholder", "Sorgu Cümlesi Giriniz");
         } else {
             $("#query").attr("placeholder", "Aranılacak Nesneyi Giriniz");
         }
     }); 
-    $('#advanceSearchInfo').click(function() {  
-        if ($('#advanceSearchModal').css('display') == 'none') {
-            $("#advanceSearchModal").slideDown(500, function(){
-                 $("#advanceSearchModal").slideDown(500);
+    $('#advancedSearchInfo').click(function() {  
+        if ($('#advancedSearchModal').css('display') == 'none') {
+            $("#advancedSearchModal").slideDown(500, function(){
+                 $("#advancedSearchModal").slideDown(500);
              });
         } else {
-            $("#advanceSearchModal").fadeTo(0, 600).slideUp(500, function(){
-                $("#advanceSearchModal").slideUp(500);
+            $("#advancedSearchModal").fadeTo(0, 600).slideUp(500, function(){
+                $("#advancedSearchModal").slideUp(500);
             });
         }
     }); 

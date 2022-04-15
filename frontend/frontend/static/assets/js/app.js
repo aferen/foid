@@ -48,6 +48,9 @@ class FileUpload {
         formData.append('user', user);
         var query = $("#query").val()
         formData.append('query', query);
+        var advancedSearch = $("#advancedSearch").is(':checked') ? true : false;
+        formData.append('advancedSearch', advancedSearch);
+        
         if(!docID) {
             $('#statusMessage').text("Dosya yükleniyor...")
             $.ajax({

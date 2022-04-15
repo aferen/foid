@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from statistics import mode
 
 from django.db import models
 from users.models import User    
@@ -44,6 +45,7 @@ class SearchHistory(models.Model):
     resultTotalPage = models.IntegerField(null=True,  blank=True)
     resultPageList = models.TextField(null=True,  blank=True)
     resultMessage = models.TextField(null=True,  blank=True, max_length=250)
+    isAdvancedSearch = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     objects = CustomManager()
