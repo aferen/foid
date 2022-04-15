@@ -9,6 +9,8 @@
     <div class="col-md-10">
         <form enctype="multipart/form-data" method="POST" action="">
             {% csrf_token %}
+            <div id="alert_placeholder" class="container" ></div>
+
             <div class="form-row">
                 <div class="col-md-8 mb-3">
                     <input type="text" class="form-control" id="query" placeholder="Aranılacak Nesneyi Giriniz" name="query">
@@ -40,13 +42,15 @@
         </form>
         <div class="form-row">
             <div class="col-md-4" style="display: none;" id="uploaded_files">
-                <input type="file" class="custom-file-input" lang="tr" id="fileupload" style="display: none;">
+                <input type="file" class="custom-file-input" lang="tr" id="fileupload" style="display: none;" accept=".pdf" >
 
                 <div class="file-icon">
                     <i class="far fa-file-alt"></i>
                 </div>
                 <div class="file-details">
-                    <p style="display: inline-block;" class="filename">{{document.name}}</p>
+                    <p style="display: inline-block;" class="filenameText">{{document.name}}</p>
+                    <p style="display: none;" class="filename">{{document.name}}</p>
+
                     <button title="Kaldır" type="button" id="removeFile" class="close">
                         <span>&times;</span>
                     </button>
@@ -88,6 +92,7 @@
         <span id="user" style="display: none;">{{ user }}</span>
 
         <span id="resultPageList" style="display: none;"></span>
+
     </div>
 </div>
 

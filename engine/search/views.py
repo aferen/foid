@@ -488,15 +488,30 @@ def createDocumentObject(docID, path):
     docInfo=doc.info[0]
     creator=producer=title=keywords=creationDate=""
     if 'Creator' in docInfo:
-        creator= ['Creator'].decode("utf-8") 
+        try:
+            creator= ['Creator'].decode("utf-8") 
+        except:
+            pass
     if 'Producer' in docInfo:
-        producer=doc.info[0]['Producer'].decode("utf-8")
+        try:
+            producer=doc.info[0]['Producer'].decode("utf-8")
+        except:
+            pass
     if 'Title' in docInfo:
-        title=doc.info[0]['Title'].decode("utf-8")
+        try:
+            title=doc.info[0]['Title'].decode("utf-8")
+        except:
+            pass
     if 'Keywords' in docInfo:
-        keywords= doc.info[0]['Keywords'].decode("utf-8")
+        try:
+            keywords= doc.info[0]['Keywords'].decode("utf-8")
+        except:
+            pass
     if 'CreationDate' in docInfo:
-        creationDate=doc.info[0]['CreationDate'].decode("utf-8")
+        try:
+            creationDate=doc.info[0]['CreationDate'].decode("utf-8")
+        except:
+            pass
     document = DocumentDTO(docID,size,totalPages,creator,keywords,producer,title,creationDate)
     return document
 

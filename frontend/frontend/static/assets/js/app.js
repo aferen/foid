@@ -9,11 +9,51 @@ class FileUpload {
         document.getElementById("uploaded_files").style.display= '';
         document.getElementById("dropBox").style.display= 'none';
         this.file = this.input.files[0];
+        if (this.file.name.length > 35) {
+            $('.filenameText').text(this.file.name.substring(0,35)+"...")
+        } else {
+            $('.filenameText').text(this.file.name)
+        }
         $('.filename').text(this.file.name)
     }
 
     //upload file
     upload_file(start, model_id, docID) {
+        var message = ""
+        var query = $("#query").val()
+        var advancedSearch = $("#advancedSearch").is(':checked') ? true : false;
+        if (this.input.files[0]) {
+            if (!this.input.files[0]['type'].includes("pdf")) {
+                message = "Dosya Pdf Tipinde Değil. Pdf Tipinde Dosya Yükleyiniz"
+            }
+        }
+        if (!docID && !this.input.files[0]) {    
+            message = "Doküman Seçiniz"
+        } else if (!query) {
+            if (!advancedSearch) {
+                message = "Aranılacak Nesneyi Giriniz"
+            } else {
+                message = "Sorgu Cümlesi Giriniz"
+            }
+        }
+
+        if (message != "") {
+            $('#alert_placeholder').append( $('#alert_placeholder').append(
+                '<div id="alertdiv" class="container">' +
+                    '<div class="alert alert-danger alert-dismissible alert-fixed" id="danger-alert" role="alert">' +
+                    '<span>' + message + '</span>' + 
+                    '<button type="button" class="close" data-dismiss="alert">'+
+                    '<span aria-hidden="true">&times;</span>'+
+                    '</button>'+
+                '</div>' )
+              );
+          
+              // close it in 3 secs
+              setTimeout( function() {
+                $("#alertdiv").remove();
+              }, 1500 );
+            return
+        }
         document.getElementById('statusMessage').style.display= 'block';
         document.getElementById("progressBar").style.display= '';
         document.getElementById("removeFile").style.display= 'none';
@@ -46,9 +86,7 @@ class FileUpload {
         }
         var user = $("#user").text()
         formData.append('user', user);
-        var query = $("#query").val()
         formData.append('query', query);
-        var advancedSearch = $("#advancedSearch").is(':checked') ? true : false;
         formData.append('advancedSearch', advancedSearch);
         
         if(!docID) {
