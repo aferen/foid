@@ -64,8 +64,6 @@ def profile(request):
         messages.success(request, 'Kullanıcı kaydı güncellendi')
     else:
       messages.error(request, 'Kullanıcı kaydı güncellenemedi')
-      print (form.is_valid())
-      print (form.errors)
     return redirect('/')
 
   context = { 'form': form, 'item': user }

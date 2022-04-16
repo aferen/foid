@@ -17,7 +17,6 @@ import requests
 @login_required
 def index(request):
   user = request.user
-  print(user)
   if not user.is_admin:
     documents = Documents.objects.all().filter(Q(user=user)).order_by('-id')
   else:
