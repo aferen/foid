@@ -15,7 +15,7 @@ from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import resolve1
-
+import logging
 import re
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -44,16 +44,18 @@ from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 from detectron2.data.detection_utils import convert_PIL_to_numpy
 
-from .detection import ObjectDetection
-from .predictor import VisualizationDemo
+from .detection import Detection
 from detectron2.data import MetadataCatalog
 from wsgiref.util import FileWrapper
 
-WINDOW_NAME = "COCO detections"
-logger = setup_logger()
-MetadataCatalog.get("dla_val").thing_classes = ['text', 'title', 'list', 'table', 'figure']
+#WINDOW_NAME = "COCO detections"
+#logger = setup_logger()
+#MetadataCatalog.get("dla_val").thing_classes = ['text', 'title', 'list', 'table', 'figure']
 
-
+imageDetection = {}
+objectDetection = {}
+objectClassName = {}
+logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 def getDocument(request,   *args, **kwargs):
@@ -175,10 +177,13 @@ def init(docID, query, advancedSearch):
         metadataId = document.metadataID
 
         if not metadataId:
+            logger.info('Document is analyzed for the first time. \n Document ID: %s \n Query: %s', docID,query)
             metadataId, metadataPath = find(docID,docPath)
             document.metadataID = metadataId
             document.metadataPath = metadataPath
             document.save()
+        else:
+            logger.info('Document has been analysed. \n Document ID: %s \n Metadata ID: %s \n Query: %s', docID, metadataId, query)
 
         if advancedSearch == "true":
             advancedSearch = True
@@ -231,13 +236,17 @@ def createQuerySentence(query):
 
 
 def find(docID,docPath):
+    start_time = time.time()
+    global imageDetection
+    global objectDetection
+    global objectClassName
+    imageDetection = Detection(setup_cfg_DLA_Model())
+    objectDetection = Detection(setup_cfg_OD_Model())
     mp.set_start_method("spawn", force=True)  
-    cfg_DLA_Model = setup_cfg_DLA_Model()
-    demo = VisualizationDemo(cfg_DLA_Model)
     outputDir = "%s/%s" % ("media/output",docID)
     resultDir = "%s/%s" % ("media/result",docID)
     inputs = [docPath]
-    className = Objects.objects.all().values('nameTR', 'color').order_by('objectID')
+    objectClassName = Objects.objects.all().values('nameTR', 'color').order_by('objectID')
     if len(inputs) == 1:
         inputs = glob.glob(os.path.expanduser(inputs[0]))
         assert inputs, "The input path(s) was not found"
@@ -254,7 +263,7 @@ def find(docID,docPath):
             page_path = "%s/%s/%s/%s.%s" % ("media/output",docID,"pages",page_id, "jpg")
             imagePages[i].save(page_path)
             pageImgBGR= convert_PIL_to_numpy(imagePages[i], format="BGR")
-            findImagesInPage(page, pageImgBGR, imagePages[i], docID, pageNumber, demo,className)
+            findImagesInPage(page, pageImgBGR, imagePages[i], docID, pageNumber)
             document.addPage(page)
 
     json_data = json.dumps(document.reprJSON(), cls=NumpyEncoder)
@@ -262,25 +271,27 @@ def find(docID,docPath):
     metadataPath= "%s/%s.%s" % ("media/metadata",metadata_id, "json")
     with open(metadataPath, 'w') as f:
         f.write(json_data)
+    logger.info("Document analysis completed in {:.2f}s".format(time.time() - start_time))
     return metadata_id, metadataPath
 
-def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber, demo,className):
+def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber):
     start_time = time.time()
-    predictions = demo.run_on_image(pageImgBGR)
-    predictions = predictions["instances"].to(demo.cpu_device)
+    predictions = imageDetection.detectImagesInPage(pageImgBGR)
+
+    predictions = predictions["instances"].to(imageDetection.cpu_device)
     boxes = predictions.pred_boxes if predictions.has("pred_boxes") else None
     scores = predictions.scores if predictions.has("scores") else None
     classes = predictions.pred_classes.tolist() if predictions.has("pred_classes") else None
-
-    #logger.info("{}: page {} :  detected {} instances in {:.2f}s".format(docID,pageNumber, len(predictions["instances"]), time.time() - start_time))
-    # logger.info(
-    #     "{} , page {} :  detected {} instances in {:.2f}s".format(
-    #         docID,pageNumber, len(predictions["instances"]), time.time() - start_time
-    #     )
-    # )
-    
+    arr = np.array(classes)
+    logger.info(
+        "(Page number: {}) detected {} images in {:.2f}s".format(
+            pageNumber, len(arr[arr == 4]), time.time() - start_time
+        )
+    )
+    cnt=0
     for index, item in enumerate(classes):
         if item == 4:
+            cnt = cnt+1
             box = list(boxes)[index].detach().cpu().numpy()
             crop_img = crop_object(pageImg, box)
             img_id=uuid.uuid4().hex
@@ -288,22 +299,27 @@ def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber, demo,classNam
             crop_img.save(img_path)
             position= createPositionObject(boxes.tensor[index].numpy())
             image = ImageDTO(img_id,position,scores[index].numpy(),crop_img.width,crop_img.height)
-            findObjectsInImage(image,img_path,className)
+            findObjectsInImage(image,img_path,pageNumber, cnt)
             page.addImage(image)
 
-def findObjectsInImage(image,imgPath,className):
-    cfg_OD_Model = setup_cfg_OD_Model()
-    objectDetection = ObjectDetection(cfg_OD_Model)
-    predictions= objectDetection.detect(imgPath)
+def findObjectsInImage(image,imgPath,pageNumber, imageNumber):
+    start_time = time.time()
+    predictions= objectDetection.detectObjectsInImage(imgPath)
+    logger.info(
+        "(Page number: {}) ({}. Image) detected {} objects in {:.2f}s".format(
+            pageNumber, imageNumber, len(predictions["instances"]), time.time() - start_time
+        )
+    )
     predictions = predictions["instances"].to(objectDetection.cpu_device)
     boxes = predictions.pred_boxes if predictions.has("pred_boxes") else None
     scores = predictions.scores if predictions.has("scores") else None
     classes = predictions.pred_classes.tolist() if predictions.has("pred_classes") else None
-    
+  
+
     for index, item in enumerate(classes):
         obj_id=uuid.uuid4().hex
         position= createPositionObject(boxes.tensor[index].numpy())
-        object=ObjectDTO(obj_id,className[item]['nameTR'],position,scores[index].numpy(), className[item]['color'])
+        object=ObjectDTO(obj_id,objectClassName[item]['nameTR'],position,scores[index].numpy(), objectClassName[item]['color'])
         image.addObject(object)
 
 

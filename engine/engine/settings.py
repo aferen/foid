@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'search',
     'rest_framework',
     'corsheaders',
+    'colorlog',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -110,6 +111,39 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+#LOGGER
+LOGGING = {
+'version': 1,
+'disable_existing_loggers': False,
+'formatters': {
+    'colored': {
+        '()': 'colorlog.ColoredFormatter',
+        'format': "%(log_color)s %(levelname)-8s %(reset)s %(blue)s%(message)s",
+    }
+},
+'handlers': {
+    'console': {
+        'class': 'logging.StreamHandler',
+        'formatter': 'colored'
+    },
+},
+'root': {
+    'handlers': ['console'],
+    'level': 'WARNING',
+},
+'loggers': {
+    'search.views': {
+        'handlers': ['console'],
+        'level': 'INFO',
+        'propagate': False,
+    },
+    'django': {
+        'handlers': ['console'],
+        'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        'propagate': False,
+     },
+  },
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
