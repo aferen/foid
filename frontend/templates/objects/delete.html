@@ -1,0 +1,13 @@
+<form action="{% url 'deleteobject' object.id %}" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <p>{{ object.nameTR}} isimli nesneyi silmek istiyor musunuz?</p>
+        <div class="row">
+            <div class="col-md-12 ">
+                <button class="btn btn-danger ml-2 float-right" type="submit">Sil</button>
+            </div>
+            <div class="col-md-6 mx-auto">
+            </div>
+        </div>
+    </div>
+</form>

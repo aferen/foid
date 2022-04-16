@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} | Nesneler {% endblock %}
+
+{% block content %}
+
+<br>
+      {% include "partials/_alerts.html"%}
+<div class="d-flex justify-content-center">
+        <div class="col-md-10">
+            <table id="objectTable" class="table table-striped table-sm table-bordered" cellspacing="0">
+                <thead>
+                <tr>
+                    <th>Nesne ID</th>
+                    <th>Nense Adı (EN)</th>
+                    <th>Nense Adı (TR)</th>
+                    <th>Renk</th>
+                    <th><a title="Nesne Ekle" class="open-object-popup btn btn-primary btn-sm float-right" data-popup-url="{% url 'addobject' %}" href="{% url 'addobject' %}"><i class="fas fa-plus"></i></a></th>
+                </tr></thead>
+                <tbody>
+                {% for item in objects %}
+                <tr>
+                    <td>{{item.objectID}}</td>
+                    <td>{{item.nameEN}}</td>
+                    <td>{{item.nameTR}}</td>
+                    <td><div id="cp2" class="input-group" title="Using input value">
+                        <input style="display: none;" type="text" class="form-control input-lg" value="{{item.color}}"/>
+                        <span class="input-group-append">
+                          <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                        </span>
+                    </div></td>
+                    <td><a title="Nesne Sil" class="open-object-popup btn btn-sm btn-danger ml-1 float-right" data-popup-url="{% url 'deleteobject' item.id %}" href="{% url 'deleteobject' item.id %}"><i class="fas fa-trash-alt"></i></a>
+                    <a title="Nesne Güncelle" class="open-object-popup btn btn-sm btn-success ml-1 float-right" data-popup-url="{% url 'editobject' item.id %}" href="{% url 'editobject' item.id %}"><i class="fas fa-edit"></i></a></td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include "objects/popup.html" %}
+
+<script type="text/javascript">
+    $(function() {
+        $('#cp2, #cp3a, #cp3b').colorpicker();
+        $( document ).ready(function() {
+            $('#objectTable').DataTable( {
+                "language": {
+                    "lengthMenu": "Göster _MENU_",
+                    "info": "_TOTAL_ kayıttan _START_ ile _END_ arası gösteriliyor",
+                    "zeroRecords": "Kayıt Bulunamadı",
+                    "infoEmpty": "",
+                    "infoFiltered": "(toplam _MAX_ kayıttan filtrelendi)",
+                    "search": "Ara",
+                    "paginate": {
+                        "next": "Sonraki",
+                        "previous": "Önceki"
+                    }
+                },
+                "aLengthMenu": [[5,10,25, 50, 75, 100, -1], [5,10,25, 50, 75, 100, "Hepsi"]],
+                "iDisplayLength": -1
+            } );
+            document.getElementById("addObjectHeader").style.display= 'none';
+            document.getElementById("editObjectHeader").style.display= 'none';
+            document.getElementById("deleteObjectHeader").style.display= 'none';
+        });
+        $(document).on("click", ".open-object-popup", function (e) {
+            e.preventDefault();
+            var $popup = $("#objectPopup");
+            var popup_url = $(this).data("popup-url");
+            if(popup_url.indexOf('add') != -1) {
+                document.getElementById("addObjectHeader").style.display= '';
+            } else if(popup_url.indexOf('edit') != -1) {
+                document.getElementById("editObjectHeader").style.display= '';
+            } else if(popup_url.indexOf('delete') != -1) {
+                document.getElementById("deleteObjectHeader").style.display= '';
+            }
+            $(".modal-body", $popup).load(popup_url, function () {
+                $popup.modal("show");
+            });
+        });
+        $("#objectPopup").on("hidden.bs.modal", function () {
+            document.getElementById("addObjectHeader").style.display= 'none';
+            document.getElementById("editObjectHeader").style.display= 'none';
+            document.getElementById("deleteObjectHeader").style.display= 'none';
+        });    
+    });
+  </script>
+
+{% endblock%}
+
+
+
+

@@ -20,11 +20,17 @@
                 <li class="nav-item active mr-3">
                     <a class="nav-link" href="{% url 'user_index' %}"><i class="fas fa-users"></i> Kullanıcılar</a>
                 </li>
+                <li class="nav-item active mr-3">
+                    <a class="nav-link" href="{% url 'object_index' %}"><i class="fas fa-box-open"></i> Nesneler</a>
+                </li>
                 {% endif %}
                 <li class="nav-item active mr-3">
                     <a class="nav-link" href="{% url 'documents_index' %}"><i class="fas fa-folder-open"></i> Dokümanlar</a>
                 </li>
                 {% endif %}
+                <li class="nav-item active mr-3">
+                    <a class="nav-link" href="{% url 'documents_index' %}"><i class="fas fa-info-circle"></i> Hakkımızda</a>
+                </li>
             </ul>
 
             </ul>

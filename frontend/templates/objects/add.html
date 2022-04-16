@@ -1,0 +1,40 @@
+<form action="{% url 'addobject' %}" enctype="multipart/form-data" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="_objectID">Nesne ID</label>
+        <span style="float:right;">
+            {{form.objectID}}
+        </span>
+    </div>
+    <div class="form-group">
+        <label for="nameEN">Nesne Adı (EN)</label>
+        <span style="float:right;">
+            {{form.nameEN}}
+        </span>
+    </div>
+    <div class="form-group">
+        <label for="nameTR">Nesne Adı (TR)</label>
+        <span style="float:right;">
+            {{form.nameTR}}
+        </span>
+    </div>
+    <div class="form-group">
+        <div id="cp2" class="input-group" title="Using input value">
+            <label style="margin-right: 212px;" for="color">Renk</label>
+
+            <input style="float:right;" type="text" id="color" name="color" class="form-control col-xs-3" />
+            <span class="input-group-append">
+              <span class="input-group-text colorpicker-input-addon"><i></i></span>
+            </span>
+          </div>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Kaydet" class="btn ml-2 btn-primary float-right">
+</form>
+
+
+<script type="text/javascript">
+    $(function() {
+        $('#cp2, #cp3a, #cp3b').colorpicker();
+    });
+  </script>

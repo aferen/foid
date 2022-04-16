@@ -18,8 +18,10 @@ class ObjectDetection(object):
         self.cpu_device = torch.device("cpu")
         self.instance_mode = instance_mode
         self.predictor = DefaultPredictor(cfg)
+        print(self.metadata.thing_classes)
 
     def detect(self,docPath):
+        
         im = cv2.imread(docPath)
         predictions = self.predictor(im)
         return predictions,self.metadata.thing_classes
