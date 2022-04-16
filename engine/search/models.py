@@ -64,6 +64,20 @@ class SearchHistory(models.Model):
     def save(self, *args, **kwargs):
         super(SearchHistory, self).save(*args, **kwargs)
 
+class Objects(models.Model):
+    objectID= models.IntegerField(null=False,blank=False)
+    nameEN = models.CharField(max_length=250,null=False,blank=False)
+    nameTR = models.CharField(max_length=250,null=False,blank=False)
+    color = models.CharField(max_length=20,null=False,blank=False)
+    objects = CustomManager()
+
+    class Meta:
+        managed = False
+        db_table = "objects_objects"
+
+    def save(self, *args, **kwargs):
+        super(Objects, self).save(*args, **kwargs)
+
 
 class Result(models.Model):
     def __init__(self, docID, docPath,totalObject, totalImage, totalPage, pageList, message): 

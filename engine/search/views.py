@@ -5,7 +5,7 @@ from matplotlib import image
 from rest_framework import status
 from sqlalchemy import null
 from .serializers import DocumentSerializer, ResultSerializer
-from .models import Documents, SearchHistory, Result, User
+from .models import Documents, SearchHistory, Result, User, Objects
 from .metadata import DocumentDTO, PageDTO, ImageDTO, ObjectDTO, ComplexEncoder, NumpyEncoder, Position
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -237,6 +237,7 @@ def find(docID,docPath):
     outputDir = "%s/%s" % ("media/output",docID)
     resultDir = "%s/%s" % ("media/result",docID)
     inputs = [docPath]
+    className = Objects.objects.all().values('nameTR', 'color').order_by('objectID')
     if len(inputs) == 1:
         inputs = glob.glob(os.path.expanduser(inputs[0]))
         assert inputs, "The input path(s) was not found"
@@ -253,7 +254,7 @@ def find(docID,docPath):
             page_path = "%s/%s/%s/%s.%s" % ("media/output",docID,"pages",page_id, "jpg")
             imagePages[i].save(page_path)
             pageImgBGR= convert_PIL_to_numpy(imagePages[i], format="BGR")
-            findImagesInPage(page, pageImgBGR, imagePages[i], docID, pageNumber, demo)
+            findImagesInPage(page, pageImgBGR, imagePages[i], docID, pageNumber, demo,className)
             document.addPage(page)
 
     json_data = json.dumps(document.reprJSON(), cls=NumpyEncoder)
@@ -263,7 +264,7 @@ def find(docID,docPath):
         f.write(json_data)
     return metadata_id, metadataPath
 
-def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber, demo):
+def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber, demo,className):
     start_time = time.time()
     predictions = demo.run_on_image(pageImgBGR)
     predictions = predictions["instances"].to(demo.cpu_device)
@@ -287,13 +288,13 @@ def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber, demo):
             crop_img.save(img_path)
             position= createPositionObject(boxes.tensor[index].numpy())
             image = ImageDTO(img_id,position,scores[index].numpy(),crop_img.width,crop_img.height)
-            findObjectsInImage(image,img_path)
+            findObjectsInImage(image,img_path,className)
             page.addImage(image)
 
-def findObjectsInImage(image,imgPath):
+def findObjectsInImage(image,imgPath,className):
     cfg_OD_Model = setup_cfg_OD_Model()
     objectDetection = ObjectDetection(cfg_OD_Model)
-    predictions, className= objectDetection.detect(imgPath)
+    predictions= objectDetection.detect(imgPath)
     predictions = predictions["instances"].to(objectDetection.cpu_device)
     boxes = predictions.pred_boxes if predictions.has("pred_boxes") else None
     scores = predictions.scores if predictions.has("scores") else None
@@ -302,7 +303,7 @@ def findObjectsInImage(image,imgPath):
     for index, item in enumerate(classes):
         obj_id=uuid.uuid4().hex
         position= createPositionObject(boxes.tensor[index].numpy())
-        object=ObjectDTO(obj_id,className[item],position,scores[index].numpy())
+        object=ObjectDTO(obj_id,className[item]['nameTR'],position,scores[index].numpy(), className[item]['color'])
         image.addObject(object)
 
 
@@ -331,7 +332,7 @@ def filter(docID,metadataId, query):
     df = df.reset_index()
     for index, row in df.iterrows():
         objectPosition=[row['pages.images.objects.position.x1'],row['pages.images.objects.position.x2'],row['pages.images.objects.position.y1'],row['pages.images.objects.position.y2']]
-        drawBox(docID,row['pages.images.id'], objectPosition)
+        drawBox(docID,row['pages.images.id'], objectPosition,row['pages.images.objects.color'])
         imagePosition = [row['pages.images.position']['x1'],row['pages.images.position']['x2'],row['pages.images.position']['y1'],row['pages.images.position']['y2']]
         addNewImageToPage(docID,row['pages.id'], row['pages.images.id'],imagePosition)
     
@@ -362,11 +363,11 @@ def advancedfilter(docID,metadataId, querySentence):
     df.loc[:, 'temp1'] = 1
     df.loc[:, 'temp2'] = ''
     df = df.astype({"pages.images.position": str})
-    df2 = df.pivot_table('temp1', ['id','pages.id', 'pages.pageNumber', 'pages.images.id', 'pages.images.position','pages.images.objects.position.x1','pages.images.objects.position.x2','pages.images.objects.position.y1','pages.images.objects.position.y2','temp2'], 'pages.images.objects.name')
+    df2 = df.pivot_table('temp1', ['id','pages.id', 'pages.pageNumber', 'pages.images.id', 'pages.images.position','pages.images.objects.position.x1','pages.images.objects.position.x2','pages.images.objects.position.y1','pages.images.objects.position.y2','pages.images.objects.color', 'temp2'], 'pages.images.objects.name')
     df2.columns = [i.replace(" ","") for i in df2.columns]
     df2.reset_index(inplace=True)
 
-    for index in range(10,len(df2.columns)):
+    for index in range(11,len(df2.columns)):
         df4 = df2.groupby('pages.images.id')[df2.columns[index]].apply(set).to_dict()
         def control(row):
             match = row[df2.columns[index]] in df4[row['pages.images.id']]
@@ -382,7 +383,7 @@ def advancedfilter(docID,metadataId, querySentence):
     df2 = df2.reset_index()
     for index, row in df2.iterrows():
         objectPosition=[row['pages.images.objects.position.x1'],row['pages.images.objects.position.x2'],row['pages.images.objects.position.y1'],row['pages.images.objects.position.y2']]
-        drawBox(docID,row['pages.images.id'], objectPosition)
+        drawBox(docID,row['pages.images.id'], objectPosition,row['pages.images.objects.color'])
         imagePositionObject = json.loads(row['pages.images.position'].replace("'","\""))
         imagePosition = [imagePositionObject['x1'],imagePositionObject['x2'],imagePositionObject['y1'],imagePositionObject['y2']]
         addNewImageToPage(docID,row['pages.id'], row['pages.images.id'],imagePosition)
@@ -390,7 +391,7 @@ def advancedfilter(docID,metadataId, querySentence):
     return createResultDocument(docID, metadata, len(df2.index), len(df2.groupby(['pages.images.id'])))
 
 
-def drawBox(docID, imgId, box):
+def drawBox(docID, imgId, box, color):
     imgPath = "%s/%s/%s/%s.%s" % ("media/output",docID,"images",imgId, "jpg")
     outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images",imgId, "jpg")
     #color = list(np.random.random(size=3) * 256)
@@ -402,9 +403,9 @@ def drawBox(docID, imgId, box):
     image = cv2.imread(imgPath)
     start_point = (int(box[0]), int(box[1]))
     end_point = (int(box[2]), int(box[3]))
-    colors = [(255, 0, 0),(0, 255, 0),(0, 0, 255)]
+    color = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
     thickness = 2
-    image = cv2.rectangle(image, start_point, end_point, colors[random.randint(0,2)], thickness)
+    image = cv2.rectangle(image, start_point, end_point, color, thickness)
     cv2.imwrite(outputImgPath, image)
 
 
