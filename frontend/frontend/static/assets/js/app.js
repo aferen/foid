@@ -129,6 +129,24 @@ class FileUpload {
                         existingPath = res.existingPath
                         self.upload_file(nextChunk, existingPath, null);
                     } else if (res.resultDocUrl){
+                        var bodyRef = document.getElementById('resultReportTable').getElementsByTagName('tbody')[0];
+                        if (bodyRef)
+                            bodyRef.remove()
+                        var resultReport = JSON.parse(res.resultReport);
+                        var columns = addAllColumnHeaders(resultReport, selector);
+                        var selector = '#resultReportTable'
+                        var tableBody$ = $('<tbody/>');
+                        for (var i = 0; i < resultReport.length; i++) {
+                          var row$ = $('<tr/>');
+                          for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+                            var cellValue = resultReport[i][columns[colIndex]];
+                            if (cellValue == null) cellValue = "";
+                            row$.append($('<td/>').html(cellValue));
+                          }
+                          $(tableBody$).append(row$);
+                        }
+                        $(selector).append(tableBody$);
+                        
                         $('#statusMessage').text(res.message);
                         $('#resultPageList').text(res.resultPageList);
                         document.getElementById('progressBar').style.display= 'none';
@@ -175,6 +193,25 @@ class FileUpload {
                 },
                 success: function (res) {
                     if (res.resultDocUrl){
+                        var bodyRef = document.getElementById('resultReportTable').getElementsByTagName('tbody')[0];
+                        if (bodyRef)
+                            bodyRef.remove()
+                        var resultReport = JSON.parse(res.resultReport);
+                        var columns = addAllColumnHeaders(resultReport, selector);
+                        var selector = '#resultReportTable'
+                        var tableBody$ = $('<tbody/>');
+                        for (var i = 0; i < resultReport.length; i++) {
+                          var row$ = $('<tr/>');
+                          for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+                            var cellValue = resultReport[i][columns[colIndex]];
+                            if (cellValue == null) cellValue = "";
+                            row$.append($('<td/>').html(cellValue));
+                          }
+                          $(tableBody$).append(row$);
+                        }
+                        $(selector).append(tableBody$);
+
+
                         $('#statusMessage').text(res.message);
                         $('#resultPageList').text(res.resultPageList);
                         document.getElementById('progressBar').style.display= 'none';
@@ -183,6 +220,7 @@ class FileUpload {
                         PDFObject.embed(res.resultDocUrl, "#resultViewer", {forceIframe: true, page: pages[0]});
                         document.getElementById('pageController').style.display= '';
                         document.getElementById('resultViewer').style.display= '';
+                        document.getElementById('resultDetail').style.display= '';
                         $('#statusMessage').css('color', 'blue')
                         $('#resultTotalPage').text("/ " + res.resultTotalPage);
                         
@@ -202,7 +240,23 @@ class FileUpload {
                 }
             });
         }
-        
+        function addAllColumnHeaders(myList, selector) {
+            var columnSet = [];
+            var headerTr$ = $('<tr/>');
+          
+            for (var i = 0; i < myList.length; i++) {
+              var rowHash = myList[i];
+              for (var key in rowHash) {
+                if ($.inArray(key, columnSet) == -1) {
+                  columnSet.push(key);
+                  headerTr$.append($('<th/>').html(key));
+                }
+              }
+            }
+            $(selector).append(headerTr$);
+          
+            return columnSet;
+          }
 
         $.fn.inputFilter = function(inputFilter) {
             return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function() {
@@ -293,6 +347,7 @@ class FileUpload {
             // $('#pageController').attr("style", "display: none !important");
             document.getElementById('statusMessage').style.display= 'none';
             document.getElementById('progressBar').style.display= 'none';
+            document.getElementById('resultDetail').style.display= 'none';
             document.getElementById("dropBox").style.display= '';
             document.getElementById("dropBox").style.borderColor= 'gray';
             document.getElementById("dropBox").style.color= 'gray';

@@ -107,13 +107,16 @@ def search(request):
         nextSlice = request.POST['nextSlice']
     
     if docID:
-        searchHistory = init(docID, query,advancedSearch)
+        searchHistory, metadataID = init(docID, query,advancedSearch)
         if searchHistory == "Invalid":
             res = JsonResponse({'message':'Geçersiz Arama Yapıldı.',})
         elif searchHistory:
+            if not isinstance(metadataID, str):
+                metadataID = metadataID.hex
+            resultReport = getResultReport(metadataID)
             resultDocUrl = "%s://%s/result/%s/%s" % (request.scheme, request.get_host(),docID, searchHistory.resultDocID)
             message = "Arama Tamamlandı. " + searchHistory.resultMessage
-            res = JsonResponse({'message':message, 'docID': docID,'resultDocID':searchHistory.resultDocID, 'resultDocUrl': resultDocUrl, 'resultTotalPage': searchHistory.resultTotalPage, 'resultPageList': searchHistory.resultPageList})
+            res = JsonResponse({'message':message, 'docID': docID,'resultDocID':searchHistory.resultDocID, 'resultDocUrl': resultDocUrl, 'resultTotalPage': searchHistory.resultTotalPage, 'resultPageList': searchHistory.resultPageList, 'resultReport': resultReport})
         else:
             res = JsonResponse({'message':'Arama Tamamlandı. Sonuç Bulunamadı.',})
         return res
@@ -173,12 +176,51 @@ def searchById(request):
             docID = request.data['docID']
             query = request.data['query']
             advancedSearch = request.POST.get('advancedSearch')
-            result = init(docID, query, advancedSearch)
+            result, metadataID = init(docID, query, advancedSearch)
             if result:
                 serializer = ResultSerializer(result)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def getResultReport(metadataID):
+    metadataPath= "%s/%s.%s" % ("media/metadata",metadataID, "json")
+
+    with open(metadataPath) as data_file:
+        data = json.load(data_file)
+
+    df = pd.json_normalize(
+        data,
+        record_path =['pages', 'images', 'objects']
+    )
+
+    df.loc[:, 'temp1'] = 1
+    df.loc[df.score < 0.5, "score"] = 0.5
+    df = df.round(1)
+    df = df.pivot_table('temp1', ['name'], 'score', aggfunc=np.sum)
+    df["count"] = df.sum(axis=1)
+    cols = df.columns.tolist()
+    cols = cols[-1:] + cols[:-1]
+    df = df[cols]
+    df.reset_index(inplace=True)
+    
+    if 0.5 not in df:
+        df.loc[:, 0.5] = 0
+    if 0.6 not in df:
+        df.loc[:, 0.6] = 0
+    if 0.7 not in df:
+        df.loc[:, 0.7] = 0
+    if 0.8 not in df:
+        df.loc[:, 0.8] = 0
+    if 0.9 not in df:
+        df.loc[:, 0.9] = 0
+    if 1.0 not in df:
+        df.loc[:, 1.0] = 0
+
+    df = df.replace(np.nan, 0)
+    columnsTitles = ['name', 'count', 0.5,0.6,0.7,0.8,0.9,1.0]
+    df = df.reindex(columns=columnsTitles)
+    return df.to_json(orient='records',force_ascii=False) 
 
 def isAdvancedSearch(query):
     if ("&" not in query and "|" not in query and "!" not in query and "(" not in query and ")" not in query):
@@ -238,13 +280,13 @@ def init(docID, query, advancedSearch):
 
         if result == "Invalid":
             SearchHistory.objects.create(document=document, query=query, resultMessage="Geçersiz Arama Yapıldı",isAdvancedSearch=advancedSearch)
-            return "Invalid"
+            return "Invalid",None
         elif result:
-            return SearchHistory.objects.create(document=document, query=query, resultDocID=result.docID, resultDocPath=result.docPath, resultTotalObject=result.totalObject, resultTotalImage=result.totalImage, resultTotalPage=result.totalPage, resultPageList=result.pageList, resultMessage=result.message, isAdvancedSearch=advancedSearch)
+            return SearchHistory.objects.create(document=document, query=query, resultDocID=result.docID, resultDocPath=result.docPath, resultTotalObject=result.totalObject, resultTotalImage=result.totalImage, resultTotalPage=result.totalPage, resultPageList=result.pageList, resultMessage=result.message, isAdvancedSearch=advancedSearch), metadataId
         else:
             SearchHistory.objects.create(document=document, query=query, resultMessage="Sonuç Bulunamadı",isAdvancedSearch=advancedSearch)
     
-    return None
+    return None, None
 
 def find(docID,docPath):
     start_time = time.time()

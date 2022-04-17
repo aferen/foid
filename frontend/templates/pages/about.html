@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} | Nesneler {% endblock %}
+
+{% block content %}
+
+<br>
+      {% include "partials/_alerts.html"%}
+<div class="d-flex justify-content-center">
+        <div class="col-md-10">
+            <p style="padding: 12px;">FOID (Find Object in Document) uygulaması Kocaeli Üniversitesi Bilgisayar Mühendisliği Bölümü Araştırma Problemleri ve Bitirme Projesi dersleri kapsamında geliştirilmiştir. Doküman içerisinde aratılabilecek nesnelerin listesine ve nesnelerin doküman üzerinde işaretlenecek renklerine aşağıdaki listeden erişebilirsiniz.</p>
+            <div class="col-md-6">
+            <table id="objectTable" class="table table-striped table-sm table-bordered" cellspacing="0">
+                <thead>
+                <tr>
+                    <th>Nense Adı (EN)</th>
+                    <th>Nense Adı (TR)</th>
+                    <th>Renk</th>
+                </tr></thead>
+                <tbody>
+                {% for item in objects %}
+                <tr>
+                    <td>{{item.nameEN}}</td>
+                    <td>{{item.nameTR}}</td>
+                    <td><div id="cp2" class="input-group" title="Using input value">
+                        <input style="display: none;" type="text" class="form-control input-lg" value="{{item.color}}"/>
+                        <span class="input-group-append">
+                          <span class="input-group-text colorpicker-input-addon"><i></i></span>
+                        </span>
+                    </div></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function() {
+        $('#cp2, #cp3a, #cp3b').colorpicker();
+        $( document ).ready(function() {
+            $('#objectTable').DataTable( {
+                "language": {
+                    "lengthMenu": "Göster _MENU_",
+                    "info": "_TOTAL_ kayıttan _START_ ile _END_ arası gösteriliyor",
+                    "zeroRecords": "Kayıt Bulunamadı",
+                    "infoEmpty": "",
+                    "infoFiltered": "(toplam _MAX_ kayıttan filtrelendi)",
+                    "search": "Ara",
+                    "paginate": {
+                        "next": "Sonraki",
+                        "previous": "Önceki"
+                    }
+                },
+                "aLengthMenu": [[5,10,25, 50, 75, 100, -1], [5,10,25, 50, 75, 100, "Hepsi"]],
+                "iDisplayLength": -1
+            } );
+        });  
+    });
+  </script>
+
+{% endblock%}
+
+
+
+
