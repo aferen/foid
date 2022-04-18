@@ -384,19 +384,34 @@ def createQuerySentence(query):
         word=words[i].replace("(","").replace(")","")
         if word not in wordList:
             wordList.append(word)
+            index = query.index(word)
             if "!" in word:
                 con=word[1:]+"!="+word[1:]
-                index = query.index(word)
                 if query[index-1] == "&" or query[index+len(word)] == "&":
                     lastCon=" and (%s != %s)%s" % (word[1:],word[1:],lastCon)
                 else:
                     lastCon=" or (%s != %s)%s" % (word[1:],word[1:],lastCon)
             else:
-                con=word+"=="+word
-                if lastCon[-1:] == ")" or not lastCon:
-                    lastCon="%s and (%s == 1" % (lastCon,word)
+                condition=""
+                firstCondition=False
+                if index-1 >= 0:
+                    condition="query[index-1] == \"&\""
+                    firstCondition=True
+                if index+len(word) < len(query):
+                    if firstCondition:
+                        condition=condition+"or query[index+len(word)] == \"&\""
+                    else:
+                        condition = "query[index+len(word)] == \"&\""
+                if eval(condition):
+                    con = word + "==" + word
                 else:
-                    lastCon="%s or %s == 1" % (lastCon,word)
+                    #con=word+"==1"
+                    con = word + "==" + word
+                if lastCon[-1:] == ")" or not lastCon:
+                    lastCon = "%s and (%s == 1" % (lastCon, word)
+                else:
+                    lastCon = "%s or %s == 1" % (lastCon, word)
+
             query = query.replace(word,con)
 
     query = query.replace("&"," and ").replace("|"," or ")
@@ -427,7 +442,8 @@ def filter(docID,metadataId, query):
         ['pages', 'images', 'id'], 
         ['pages', 'images', 'position']
     ],
-    record_prefix='pages.images.objects.')#potted plant
+    record_prefix='pages.images.objects.')
+    df['pages.images.objects.name'].replace('\s+', '', regex=True, inplace=True)
     df.query('`pages.images.objects.name` == "{}"'.format(query),inplace = True)
     if df.empty:
         return None
@@ -496,6 +512,8 @@ def advancedfilter(docID,metadataId, querySentence):
             # return match2 or (match1 and (row['Num1'] in range(5, 13)))
         df2.apply(control, axis=1).astype(int)
     try:
+        #querySentence="((tekne==1 and kişi==0) or (tekne==0 and kişi==1)) and şemsiye==şemsiye"
+        #querySentence="((tekne==tekne and kişi==kişi) or (saat==1)) and (tekne == 1 or kişi == 1 or saat == 1)"
         df2.query(querySentence,inplace = True)
     except:
         logger.error("Invalid query sentence")
