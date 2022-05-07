@@ -152,7 +152,13 @@ class FileUpload {
                         document.getElementById('progressBar').style.display= 'none';
                         var resultPageList = $('#resultPageList').text()
                         var pages = resultPageList.includes(",") ? $('#resultPageList').text().split(",") : $('#resultPageList').text();
-                        PDFObject.embed(res.resultDocUrl, "#resultViewer", {forceIframe: true, page: pages[0]});
+                        var firstResultPage = 0
+                        if (Array.isArray(pages)) {
+                            firstResultPage = pages[0]
+                        } else {
+                            firstResultPage = pages
+                        }
+                        PDFObject.embed(res.resultDocUrl, "#resultViewer", {forceIframe: true, page: firstResultPage});
                         document.getElementById('pageController').style.display= '';
                         document.getElementById('resultViewer').style.display= '';
                         $('#statusMessage').css('color', 'blue')
@@ -169,6 +175,27 @@ class FileUpload {
                         $('#statusMessage').text(res.message);
                         $('#docID').text(res.docID);
                     } else {
+                        if (res.resultReport) {
+                            var bodyRef = document.getElementById('resultReportTable').getElementsByTagName('tbody')[0];
+                            if (bodyRef)
+                                bodyRef.remove()
+                            var resultReport = JSON.parse(res.resultReport);
+                            var columns = addAllColumnHeaders(resultReport, selector);
+                            var selector = '#resultReportTable'
+                            var tableBody$ = $('<tbody/>');
+                            for (var i = 0; i < resultReport.length; i++) {
+                              var row$ = $('<tr/>');
+                              for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+                                var cellValue = resultReport[i][columns[colIndex]];
+                                if (cellValue == null) cellValue = "";
+                                row$.append($('<td/>').html(cellValue));
+                              }
+                              $(tableBody$).append(row$);
+                            }
+                            $(selector).append(tableBody$);
+                            document.getElementById('resultDetail').style.display= '';
+
+                        }
                         $('#statusMessage').text(res.message);
                         document.getElementById('resultViewer').style.display= 'none';
                         document.getElementById('pageController').style.display= 'none'
@@ -217,7 +244,13 @@ class FileUpload {
                         document.getElementById('progressBar').style.display= 'none';
                         var resultPageList = $('#resultPageList').text()
                         var pages = resultPageList.includes(",") ? $('#resultPageList').text().split(",") : $('#resultPageList').text();
-                        PDFObject.embed(res.resultDocUrl, "#resultViewer", {forceIframe: true, page: pages[0]});
+                        var firstResultPage = 0
+                        if (Array.isArray(pages)) {
+                            firstResultPage = pages[0]
+                        } else {
+                            firstResultPage = pages
+                        }
+                        PDFObject.embed(res.resultDocUrl, "#resultViewer", {forceIframe: true, page: firstResultPage});
                         document.getElementById('pageController').style.display= '';
                         document.getElementById('resultViewer').style.display= '';
                         document.getElementById('resultDetail').style.display= '';
@@ -230,6 +263,27 @@ class FileUpload {
                             return /^\d*$/.test(value) && (value === "" || parseInt(value) <= parseInt(res.resultTotalPage) && (value === "" || parseInt(value) >  0));
                         });
                     } else {
+                        if (res.resultReport) {
+                            var bodyRef = document.getElementById('resultReportTable').getElementsByTagName('tbody')[0];
+                            if (bodyRef)
+                                bodyRef.remove()
+                            var resultReport = JSON.parse(res.resultReport);
+                            var columns = addAllColumnHeaders(resultReport, selector);
+                            var selector = '#resultReportTable'
+                            var tableBody$ = $('<tbody/>');
+                            for (var i = 0; i < resultReport.length; i++) {
+                              var row$ = $('<tr/>');
+                              for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+                                var cellValue = resultReport[i][columns[colIndex]];
+                                if (cellValue == null) cellValue = "";
+                                row$.append($('<td/>').html(cellValue));
+                              }
+                              $(tableBody$).append(row$);
+                            }
+                            $(selector).append(tableBody$);
+                            document.getElementById('resultDetail').style.display= '';
+
+                        }
                         $('#statusMessage').text(res.message);
                         document.getElementById('resultViewer').style.display= 'none';
                         document.getElementById('pageController').style.display= 'none'
@@ -346,11 +400,13 @@ class FileUpload {
             document.getElementById('pageController').style.display= 'none'
             // $('#pageController').attr("style", "display: none !important");
             document.getElementById('statusMessage').style.display= 'none';
+            document.getElementById('resultDetailModal').style.display= 'none';
             document.getElementById('progressBar').style.display= 'none';
             document.getElementById('resultDetail').style.display= 'none';
             document.getElementById("dropBox").style.display= '';
             document.getElementById("dropBox").style.borderColor= 'gray';
             document.getElementById("dropBox").style.color= 'gray';
+            document.getElementById("removeFile").style.display= '';
             document.getElementById("fileupload").value = null;
             $('#statusMessage').css('color', 'black')
             $('#docID').text('');
@@ -362,6 +418,7 @@ class FileUpload {
             document.getElementById('resultViewer').style.display= 'none';
             document.getElementById('progressBar').style.display= 'none';
             document.getElementById('pageController').style.display= 'none';
+            document.getElementById('resultDetailModal').style.display= 'none';
             // $('#pageController').attr("style", "display: none !important");
             $('#statusMessage').css('color', 'black')  
             $("#query").val('');
