@@ -47,15 +47,14 @@ class ImageDTO():
         return dict(id=self.id, position=self.position, score=self.score, width=self.width, height=self.height, objects=self.objects)
 
 class ObjectDTO():
-    def __init__(self, id,name,position,score,color):
+    def __init__(self, id,name,position,score):
         self.id=id
         self.name=name
         self.position=position
         self.score=score
-        self.color=color
     
     def reprJSON(self):
-        return dict(id=self.id, name=self.name, position=self.position, score=self.score,color=self.color)
+        return dict(id=self.id, name=self.name, position=self.position, score=self.score)
         
 class Position():
     def __init__(self, x1,x2,y1,y2):
