@@ -1,59 +1,41 @@
-from email import message
-from django.shortcuts import render
-from matplotlib import image
-
 from rest_framework import status
-from sqlalchemy import null
 from .serializers import DocumentSerializer, ResultSerializer
 from .models import Documents, SearchHistory, Result, User, Objects
-from .metadata import DocumentDTO, PageDTO, ImageDTO, ObjectDTO, ComplexEncoder, NumpyEncoder, Position
+from .metadata import DocumentDTO, PageDTO, ImageDTO, ObjectDTO,NumpyEncoder, Position
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Q
 from django.http import HttpResponse
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import resolve1
 import logging
 import re
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import random
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 import pandas as pd
-import argparse
 import glob
 import multiprocessing as mp
 import os
 import time
-import cv2
 import tqdm
 import uuid
 import shutil
 import json
 import shutil
-import requests
 import numpy as np
 from django.http import JsonResponse
-import pickle
-
 from pdf2image import convert_from_path
 from detectron2.config import get_cfg
-from detectron2.data.detection_utils import read_image
-from detectron2.utils.logger import setup_logger
 from detectron2.data.detection_utils import convert_PIL_to_numpy
-
 from .detection import Detection
-from detectron2.data import MetadataCatalog
 from wsgiref.util import FileWrapper
-
 #WINDOW_NAME = "COCO detections"
 #logger = setup_logger()
 #MetadataCatalog.get("dla_val").thing_classes = ['text', 'title', 'list', 'table', 'figure']
 
 imageDetection = {}
 objectDetection = {}
+chartDetection = {}
 objectClassName = {}
 logger = logging.getLogger(__name__)
 
@@ -86,7 +68,7 @@ def search(request):
         os.makedirs(os.path.join(projectPath, documentDir))
     
     query = request.POST['query']
-    query = query.replace(" ", "")
+    query = query.replace(" ", "").replace('İ', 'i').lower()
     username = request.POST['user']
     docID = request.POST.get('docID')
     advancedSearch = request.POST.get('advancedSearch')
@@ -107,19 +89,25 @@ def search(request):
         nextSlice = request.POST['nextSlice']
     
     if docID:
-        searchHistory, metadataID = init(docID, query,advancedSearch)
-        if searchHistory == "Invalid":
-            res = JsonResponse({'message':'Geçersiz Arama Yapıldı.',})
-        elif searchHistory:
+        try:
+            searchHistory, metadataID,errorMessage = init(docID, query,advancedSearch)
             if not isinstance(metadataID, str):
                 metadataID = metadataID.hex
             resultReport = getResultReport(metadataID)
-            resultDocUrl = "%s://%s/result/%s/%s" % (request.scheme, request.get_host(),docID, searchHistory.resultDocID)
-            message = "Arama Tamamlandı. " + searchHistory.resultMessage
-            res = JsonResponse({'message':message, 'docID': docID,'resultDocID':searchHistory.resultDocID, 'resultDocUrl': resultDocUrl, 'resultTotalPage': searchHistory.resultTotalPage, 'resultPageList': searchHistory.resultPageList, 'resultReport': resultReport})
-        else:
-            res = JsonResponse({'message':'Arama Tamamlandı. Sonuç Bulunamadı.',})
+            if searchHistory == "Invalid":
+                res = JsonResponse({'message':errorMessage,'resultReport': resultReport})
+            elif searchHistory:
+                resultDocUrl = "%s://%s/result/%s/%s" % (request.scheme, request.get_host(),docID, searchHistory.resultDocID)
+                message = "Arama Tamamlandı. " + searchHistory.resultMessage
+                res = JsonResponse({'message':message, 'docID': docID,'resultDocID':searchHistory.resultDocID, 'resultDocUrl': resultDocUrl, 'resultTotalPage': searchHistory.resultTotalPage, 'resultPageList': searchHistory.resultPageList, 'resultReport': resultReport})
+            else:
+                res = JsonResponse({'message':'Arama Tamamlandı. Sonuç Bulunamadı.','resultReport': resultReport})
+        except Exception as e:
+            logger.exception(e)
+            res = JsonResponse({'message':'Hata Oluştu.',})
         return res
+
+        
 
     #  return res
     if file=="" or fileName=="" or existingPath=="" or end=="" or nextSlice=="":
@@ -256,8 +244,12 @@ def parenthesesCheck(query):
         return False
 
 def init(docID, query, advancedSearch):
+    global objectClassName
     document = Documents.objects.get(Q(docID=docID))
     if document:
+        objectClassName = Objects.objects.all().values('nameTR', 'color')
+                
+        
         # searchHistory = SearchHistory.objects.filter(Q(document=document)).order_by('pk').last()
         docPath = document.docPath
         metadataId = document.metadataID
@@ -271,35 +263,49 @@ def init(docID, query, advancedSearch):
         else:
             logger.info('Document has been analysed. Document ID: %s Metadata ID: %s Query: %s', docID, metadataId, query)
 
+        for i in range(len(objectClassName)):
+            objectClassName[i]["nameTR"] = objectClassName[i]["nameTR"].replace(" ", "")
+
         if advancedSearch:
             query = query.replace(" ", "")
-            querySentence = createQuerySentence(query)
-            result =  advancedfilter(docID,metadataId, querySentence)
+            querySentences, wordList, errormessage = createQuerySentences(query)
+            if errormessage:
+                SearchHistory.objects.create(document=document, query=query, resultMessage=errormessage,isAdvancedSearch=advancedSearch)
+                return "Invalid", metadataId,errormessage
+            else:
+                result =  advancedfilter(docID,metadataId, querySentences, wordList)
         else:
+            #obj = objectClassName.filter(nameTR=query1)
+            obj = [x for x in objectClassName if x['nameTR'] == query]
+            if not obj:
+                errormessage = "%s nesnesi için arama yapılamamaktadır." % (query)
+                return "Invalid", metadataId,errormessage
             result =  filter(docID,metadataId, query)
 
         if result == "Invalid":
             SearchHistory.objects.create(document=document, query=query, resultMessage="Geçersiz Arama Yapıldı",isAdvancedSearch=advancedSearch)
-            return "Invalid",None
+            errorMessage = 'Geçersiz Arama Yapıldı.'
+            return "Invalid",metadataId,errorMessage
         elif result:
-            return SearchHistory.objects.create(document=document, query=query, resultDocID=result.docID, resultDocPath=result.docPath, resultTotalObject=result.totalObject, resultTotalImage=result.totalImage, resultTotalPage=result.totalPage, resultPageList=result.pageList, resultMessage=result.message, isAdvancedSearch=advancedSearch), metadataId
+            return SearchHistory.objects.create(document=document, query=query, resultDocID=result.docID, resultDocPath=result.docPath, resultTotalObject=result.totalObject, resultTotalImage=result.totalImage, resultTotalPage=result.totalPage, resultPageList=result.pageList, resultMessage=result.message, isAdvancedSearch=advancedSearch), metadataId,None
         else:
             SearchHistory.objects.create(document=document, query=query, resultMessage="Sonuç Bulunamadı",isAdvancedSearch=advancedSearch)
     
-    return None, None
+    return None, metadataId, None
 
 def find(docID,docPath):
     start_time = time.time()
     global imageDetection
     global objectDetection
-    global objectClassName
+    global chartDetection
     imageDetection = Detection(setup_cfg_DLA_Model())
     objectDetection = Detection(setup_cfg_OD_Model())
+    chartDetection = Detection(setup_cfg_CHT_Model())
     mp.set_start_method("spawn", force=True)  
     outputDir = "%s/%s" % ("media/output",docID)
     resultDir = "%s/%s" % ("media/result",docID)
+    metadataDir = "media/metadata"
     inputs = [docPath]
-    objectClassName = Objects.objects.all().values('nameTR', 'color').order_by('objectID')
     if len(inputs) == 1:
         inputs = glob.glob(os.path.expanduser(inputs[0]))
         assert inputs, "The input path(s) was not found"
@@ -307,6 +313,7 @@ def find(docID,docPath):
     for path in tqdm.tqdm(inputs, disable=not outputDir):
         prepareFolderStructure(outputDir)
         prepareResultFolderStructure(resultDir)
+        metadataFolderStructure(metadataDir)
         document = createDocumentObject(docID, path) 
         imagePages = convertPdfToPngPerPage(path)
         for i in range(len(imagePages)):
@@ -321,7 +328,7 @@ def find(docID,docPath):
 
     json_data = json.dumps(document.reprJSON(), cls=NumpyEncoder)
     metadata_id=uuid.uuid4().hex
-    metadataPath= "%s/%s.%s" % ("media/metadata",metadata_id, "json")
+    metadataPath= "%s/%s.%s" % (metadataDir ,metadata_id, "json")
     with open(metadataPath, 'w') as f:
         f.write(json_data)
     logger.info("Metadata file created: Metadata ID: %s", metadata_id)
@@ -353,14 +360,38 @@ def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber):
             crop_img.save(img_path)
             position= createPositionObject(boxes.tensor[index].numpy())
             image = ImageDTO(img_id,position,scores[index].numpy(),crop_img.width,crop_img.height)
-            findObjectsInImage(image,img_path,pageNumber, cnt)
+            objectCount = findObjectsInImage(image,img_path,pageNumber, cnt)
+            #if objectCount == 0:
+            #findChartInImage(image,img_path,pageNumber, cnt)
             page.addImage(image)
 
 def findObjectsInImage(image,imgPath,pageNumber, imageNumber):
     start_time = time.time()
     predictions= objectDetection.detectObjectsInImage(imgPath)
+    objectCount = len(predictions["instances"])
     logger.info(
         "(Page number: {}) ({}. Image) detected {} objects in {:.2f}s".format(
+            pageNumber, imageNumber, objectCount, time.time() - start_time
+        )
+    )
+    predictions = predictions["instances"].to(objectDetection.cpu_device)
+    boxes = predictions.pred_boxes if predictions.has("pred_boxes") else None
+    scores = predictions.scores if predictions.has("scores") else None
+    classes = predictions.pred_classes.tolist() if predictions.has("pred_classes") else None
+  
+    for index, item in enumerate(classes):
+        obj_id=uuid.uuid4().hex
+        position= createPositionObject(boxes.tensor[index].numpy())
+        object=ObjectDTO(obj_id,objectClassName[item]['nameTR'],position,scores[index].numpy())
+        image.addObject(object)
+
+    return objectCount
+
+def findChartInImage(image,imgPath,pageNumber, imageNumber):
+    start_time = time.time()
+    predictions= chartDetection.detectChartInImage(imgPath)
+    logger.info(
+        "(Page number: {}) ({}. Image) detected {} charts in {:.2f}s".format(
             pageNumber, imageNumber, len(predictions["instances"]), time.time() - start_time
         )
     )
@@ -372,57 +403,102 @@ def findObjectsInImage(image,imgPath,pageNumber, imageNumber):
     for index, item in enumerate(classes):
         obj_id=uuid.uuid4().hex
         position= createPositionObject(boxes.tensor[index].numpy())
-        object=ObjectDTO(obj_id,objectClassName[item]['nameTR'],position,scores[index].numpy(), objectClassName[item]['color'])
+        print("item: ",item)
+        obj = objectClassName.get(objectID=item+500)
+        object=ObjectDTO(obj_id,obj['nameTR'],position,scores[index].numpy())
         image.addObject(object)
 
 
-def createQuerySentence(query):
-    words = re.split('&|\|',query)
-    lastCon=""
-    wordList=[]
-    for i in range(0,len(words)):
-        word=words[i].replace("(","").replace(")","")
-        if word not in wordList:
-            wordList.append(word)
-            index = query.index(word)
-            if "!" in word:
-                con=word[1:]+"!="+word[1:]
-                if query[index-1] == "&" or query[index+len(word)] == "&":
-                    lastCon=" and (%s != %s)%s" % (word[1:],word[1:],lastCon)
+def createQuerySentences(query):
+    queries = []
+    queryTemp=query
+    querySentences=[]
+    allWordList=[]
+    while ")|" in query:
+        print(query)
+        index1 = query.index(')|')+1
+        print(index1)
+        if len(query[:index1]) > 1:
+            queries.append(query[:index1])
+        query = query[index1:]
+    
+    while "|(" in query:
+        print(query)
+        index1 = query.index('|(')+1
+        print(index1)
+        if len(query[:index1]) > 1:
+            queries.append(query[:index1])
+        query = query[index1:]
+
+    queries.append(query) 
+    print(queries)
+    for i in range(len(queries)):
+        if queries[i][0] == "|":
+            queries[i] = queries[i][1:]
+        if queries[i][len(queries[i])-1] == "|":
+            queries[i] = queries[i][:len(queries[i])-1]
+
+    print(queries)
+    for k in range(len(queries)):
+        words = re.split('&|\|',queries[k])
+        lastCon=""
+        wordList=[]
+        for i in range(0,len(words)):
+            word=words[i].replace("(","").replace(")","")
+            if word not in wordList:
+                wordList.append(word)
+                if word not in allWordList:
+                    allWordList.append(word)
+                index = queries[k].index(word)
+                if "!" in word:
+                    obj = [x for x in objectClassName if x['nameTR'] == word[1:]]
+                    if not obj:
+                        message = "%s nesnesi için arama yapılamamaktadır." % (word[1:])
+                        return None, None, message
                 else:
-                    lastCon=" or (%s != %s)%s" % (word[1:],word[1:],lastCon)
-            else:
-                condition=""
-                firstCondition=False
-                if index-1 >= 0:
-                    condition="query[index-1] == \"&\""
-                    firstCondition=True
-                if index+len(word) < len(query):
-                    if firstCondition:
-                        condition=condition+"or query[index+len(word)] == \"&\""
+                    obj = [x for x in objectClassName if x['nameTR'] == word]
+                    if not obj:
+                        message = "%s nesnesi için arama yapılamamaktadır." % (word)
+                        return None, None, message
+                #obj = objectClassName.filter(nameTR=word)
+
+                
+                if "!" in word:
+                    con=word[1:]+"!="+word[1:]
+                    if index == 0:
+                        if queries[k][len(word)-1] == "&":
+                            lastCon=" and (%s != %s)%s" % (word[1:],word[1:],lastCon)
+                        else:
+                            lastCon=" or (%s != %s)%s" % (word[1:],word[1:],lastCon)
                     else:
-                        condition = "query[index+len(word)] == \"&\""
-                if eval(condition):
-                    con = word + "==" + word
+                        if queries[k][index-1] == "&" or queries[k][index+len(word)] == "&":
+                            lastCon=" and (%s != %s)%s" % (word[1:],word[1:],lastCon)
+                        else:
+                            lastCon=" or (%s != %s)%s" % (word[1:],word[1:],lastCon)                        
                 else:
-                    #con=word+"==1"
                     con = word + "==" + word
-                if lastCon[-1:] == ")" or not lastCon:
-                    lastCon = "%s and (%s == 1" % (lastCon, word)
-                else:
-                    lastCon = "%s or %s == 1" % (lastCon, word)
+                    if lastCon[-1:] == ")" or not lastCon:
+                        lastCon = "%s and (%s == 1" % (lastCon, word)
+                    else:
+                        lastCon = "%s or %s == 1" % (lastCon, word)
+                queries[k] = queries[k].replace(word,con)
 
-            query = query.replace(word,con)
+        queries[k] = queries[k].replace("&"," and ").replace("|"," or ")
+        queries[k]="(%s)" % (queries[k])
+        print(queries[k])
+        if lastCon[-1:] != ")":
+            lastCon="%s)" % (lastCon)
+        querySentence=queries[k]+lastCon
+        querySentences.append(querySentence)
+    print(querySentences)
 
-    query = query.replace("&"," and ").replace("|"," or ")
-    query="(%s)" % (query)
-    print(query)
-    if lastCon[-1:] != ")":
-        lastCon="%s)" % (lastCon)
-    querySentence=query+lastCon
-    print(querySentence)
+ 
+    # if lastCon[-1:] != ")":
+    #     lastCon="%s)" % (lastCon)
+    # querySentence=query+lastCon
+    # print(querySentence)
     #querySentence="((boat==boat and person==person) or (clock==clock)) and ((boat == 1 and person == 0) or (boat == 0 and person == 1) or clock == 1)"
-    return querySentence
+    return querySentences, allWordList, None
 
 def filter(docID,metadataId, query):
     tempOutputDir = "%s/%s" % ("media/tempOutput",docID)
@@ -443,6 +519,7 @@ def filter(docID,metadataId, query):
         ['pages', 'images', 'position']
     ],
     record_prefix='pages.images.objects.')
+    df['pages.images.objects.objectName'] = df['pages.images.objects.name']
     df['pages.images.objects.name'].replace('\s+', '', regex=True, inplace=True)
     df.query('`pages.images.objects.name` == "{}"'.format(query),inplace = True)
     if df.empty:
@@ -454,17 +531,23 @@ def filter(docID,metadataId, query):
         outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images", imgID, "jpg")
         if newImage:
             imgPath = "%s/%s/%s/%s.%s" % ("media/output",docID,"images", imgID, "jpg")
-            image = cv2.imread(imgPath)
+            #image = cv2.imread(imgPath)
+            image = Image.open(imgPath)
         objectPosition=[row['pages.images.objects.position.x1'],row['pages.images.objects.position.x2'],row['pages.images.objects.position.y1'],row['pages.images.objects.position.y2']]
-        image = drawBox(image, objectPosition,row['pages.images.objects.color'])
+        #obj = objectClassName.get(nameTR=row['pages.images.objects.objectName'])
+        obj = [x for x in objectClassName if x['nameTR'] == row['pages.images.objects.name']][0]
+        color = obj["color"]
+        image = drawBox(image, objectPosition,color)
         if (index+1==len(df)):
             outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images", imgID, "jpg")
-            cv2.imwrite(outputImgPath, image)
+            #cv2.imwrite(outputImgPath, image)
+            image.save(outputImgPath)
             imagePosition = [row['pages.images.position']['x1'],row['pages.images.position']['x2'],row['pages.images.position']['y1'],row['pages.images.position']['y2']]
             addNewImageToPage(docID,row['pages.id'], imgID,imagePosition)     
         elif (df['pages.images.id'][index+1] != imgID):
             outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images", imgID, "jpg")
-            cv2.imwrite(outputImgPath, image)
+            #cv2.imwrite(outputImgPath, image)
+            image.save(outputImgPath)            
             imagePosition = [row['pages.images.position']['x1'],row['pages.images.position']['x2'],row['pages.images.position']['y1'],row['pages.images.position']['y2']]
             addNewImageToPage(docID,row['pages.id'], imgID,imagePosition)
             newImage = True
@@ -474,7 +557,7 @@ def filter(docID,metadataId, query):
     return createResultDocument(docID, metadata, len(df.index), len(df.groupby(['pages.images.id'])))
 
 
-def advancedfilter(docID,metadataId, querySentence):
+def advancedfilter(docID,metadataId, querySentences, wordList):
     tempOutputDir = "%s/%s" % ("media/tempOutput",docID)
     prepareFolderStructure(tempOutputDir)
     if isinstance(metadataId, uuid.UUID):
@@ -496,13 +579,25 @@ def advancedfilter(docID,metadataId, querySentence):
     record_prefix='pages.images.objects.')
 
     df.loc[:, 'temp1'] = 1
-    df.loc[:, 'temp2'] = ''
+    #df.loc[:, 'temp2'] = ''
+    df['pages.images.objects.objectName'] = df['pages.images.objects.name'].replace(" ","")
     df = df.astype({"pages.images.position": str})
-    df2 = df.pivot_table('temp1', ['id','pages.id', 'pages.pageNumber', 'pages.images.id', 'pages.images.position','pages.images.objects.position.x1','pages.images.objects.position.x2','pages.images.objects.position.y1','pages.images.objects.position.y2','pages.images.objects.color', 'temp2'], 'pages.images.objects.name')
+    df2 = df.pivot_table('temp1', ['id','pages.id', 'pages.pageNumber', 'pages.images.id', 'pages.images.position','pages.images.objects.position.x1','pages.images.objects.position.x2','pages.images.objects.position.y1','pages.images.objects.position.y2', 'pages.images.objects.objectName'], 'pages.images.objects.name')
     df2.columns = [i.replace(" ","") for i in df2.columns]
+    df2.loc[:, 'temp2'] = None
     df2.reset_index(inplace=True)
+    for i in range(0,len(wordList)): 
+        word=wordList[i].replace("!","")
+        # print(word)
+        # print(df2.columns.tolist())
+        if word not in df2.columns.tolist():
+            for j in range(len(querySentences)):
+                querySentences[j] = querySentences[j].replace(word, "temp2")
 
-    for index in range(11,len(df2.columns)):
+    #querySentences[0] = querySentences[0].replace("saat", "temp2")
+
+
+    for index in range(10,len(df2.columns)-1):
         df4 = df2.groupby('pages.images.id')[df2.columns[index]].apply(set).to_dict()
         def control(row):
             match = row[df2.columns[index]] in df4[row['pages.images.id']]
@@ -514,33 +609,41 @@ def advancedfilter(docID,metadataId, querySentence):
     try:
         #querySentence="((tekne==1 and kişi==0) or (tekne==0 and kişi==1)) and şemsiye==şemsiye"
         #querySentence="((tekne==tekne and kişi==kişi) or (saat==1)) and (tekne == 1 or kişi == 1 or saat == 1)"
-        df2.query(querySentence,inplace = True)
+        df3=df2[0:0]
+        for i in range(len(querySentences)):
+            df3 = df3.append(df2.query(querySentences[i]),ignore_index=True)
+        df3.drop_duplicates()
     except:
-        logger.error("Invalid query sentence")
+        logger.exception("Invalid query sentence")
         return "Invalid"
-    if df2.empty:
+    if df3.empty:
         return None
-    df2 = df2.reset_index()
-    newImage = True
-    for index, row in df2.iterrows():
+    df3 = df3.reset_index()
+    newImage = True 
+    for index, row in df3.iterrows():
         imgID = row['pages.images.id']
         outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images", imgID, "jpg")
         if newImage:
             imgPath = "%s/%s/%s/%s.%s" % ("media/output",docID,"images", imgID, "jpg")
             if os.path.isfile(outputImgPath):
                 imgPath = outputImgPath
-            image = cv2.imread(imgPath)
+            #image = cv2.imread(imgPath)
+            image = Image.open(imgPath)
         objectPosition=[row['pages.images.objects.position.x1'],row['pages.images.objects.position.x2'],row['pages.images.objects.position.y1'],row['pages.images.objects.position.y2']]
-        image = drawBox(image, objectPosition,row['pages.images.objects.color'])
-        if (index+1==len(df2)):
+        obj = objectClassName.get(nameTR=row['pages.images.objects.objectName'])
+        color = obj["color"]
+        image = drawBox(image, objectPosition,color)
+        if (index+1==len(df3)):
             outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images", imgID, "jpg")
-            cv2.imwrite(outputImgPath, image)
+            #cv2.imwrite(outputImgPath, image)
+            image.save(outputImgPath)
             imagePositionObject = json.loads(row['pages.images.position'].replace("'","\""))
             imagePosition = [imagePositionObject['x1'],imagePositionObject['x2'],imagePositionObject['y1'],imagePositionObject['y2']]
             addNewImageToPage(docID,row['pages.id'], imgID,imagePosition)     
-        elif (df2['pages.images.id'][index+1] != imgID):
+        elif (df3['pages.images.id'][index+1] != imgID):
             outputImgPath = "%s/%s/%s/%s.%s" % ("media/tempOutput",docID,"images", imgID, "jpg")
-            cv2.imwrite(outputImgPath, image)
+            #cv2.imwrite(outputImgPath, image)
+            image.save(outputImgPath)
             imagePositionObject = json.loads(row['pages.images.position'].replace("'","\""))
             imagePosition = [imagePositionObject['x1'],imagePositionObject['x2'],imagePositionObject['y1'],imagePositionObject['y2']]
             addNewImageToPage(docID,row['pages.id'], imgID,imagePosition)
@@ -548,14 +651,17 @@ def advancedfilter(docID,metadataId, querySentence):
         else:
             newImage = False
     
-    return createResultDocument(docID, metadata, len(df2.index), len(df2.groupby(['pages.images.id'])))
+    return createResultDocument(docID, metadata, len(df3.index), len(df3.groupby(['pages.images.id'])))
 
 def drawBox(image, box, color):
     start_point = (int(box[0]), int(box[1]))
     end_point = (int(box[2]), int(box[3]))
-    color = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-    thickness = 2
-    return cv2.rectangle(image, start_point, end_point, color, thickness)
+    thickness = 3
+    draw=ImageDraw.Draw(image)
+    draw.rectangle([start_point,end_point],outline=color,width=thickness)
+    return image
+    #color = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+    #return cv2.rectangle(image, start_point, end_point, color, thickness)
 
 
 def createResultDocument(docID, data, totalObject, totalImage):
@@ -610,7 +716,7 @@ def crop_object(image, box):
 def setup_cfg_DLA_Model():
     cfg = get_cfg()
     cfg.merge_from_file("configs/DLA_mask_rcnn_X_101_32x8d_FPN_3x.yaml")
-    cfg.merge_from_list(['MODEL.WEIGHTS', 'models/model_final_trimmed.pth', 'MODEL.DEVICE', 'cpu'])
+    cfg.merge_from_list(['MODEL.WEIGHTS', 'models/model_image_detection.pth', 'MODEL.DEVICE', 'cpu'])
     cfg.MODEL.RETINANET.SCORE_THRESH_TEST = 0.5
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
     cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = 0.5
@@ -621,7 +727,16 @@ def setup_cfg_OD_Model():
     cfg = get_cfg()
     cfg.merge_from_file("configs/COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml")
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
-    cfg.MODEL.WEIGHTS = "models/model_final_68b088.pkl"
+    cfg.MODEL.WEIGHTS = "models/model_object_detection.pkl"
+    cfg.MODEL.DEVICE = "cpu"
+    return cfg
+
+def setup_cfg_CHT_Model():
+    cfg = get_cfg()
+    #cfg.merge_from_file("configs/COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml")
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+    cfg.DATASETS.TEST = ("my_dataset_test", )
+    cfg.MODEL.WEIGHTS = "models/model_chart_detection.pth"
     cfg.MODEL.DEVICE = "cpu"
     return cfg
 
@@ -679,3 +794,8 @@ def prepareResultFolderStructure(resultDir):
     if os.path.exists(os.path.join(projectPath, resultDir)):
         shutil.rmtree(os.path.join(projectPath, resultDir))
     os.makedirs(os.path.join(projectPath, resultDir))
+
+def metadataFolderStructure(metadataDir):
+    projectPath = os.path.abspath(os.path.dirname(__name__))
+    if not os.path.exists(os.path.join(projectPath, metadataDir)):
+        os.makedirs(os.path.join(projectPath, metadataDir))
