@@ -13,10 +13,11 @@
                 <thead>
                 <tr>
                     <th>Nesne ID</th>
-                    <th>Nense Adı (EN)</th>
-                    <th>Nense Adı (TR)</th>
+                    <th>Nesne Adı (EN)</th>
+                    <th>Nesne Adı (TR)</th>
                     <th>Renk</th>
-                    <th><a title="Nesne Ekle" class="open-object-popup btn btn-primary btn-sm float-right" data-popup-url="{% url 'addobject' %}" href="{% url 'addobject' %}"><i class="fas fa-plus"></i></a></th>
+                    <th><a title="Nesne Ekle" class="open-object-popup btn btn-primary btn-sm float-right" data-popup-url="{% url 'addobject' %}" href="{% url 'addobject' %}"><i class="fas fa-plus"></i></a>
+                        <a title="Toplu Nesne Ekle" class="btn btn-secondary btn-sm float-right mr-2" href="{% url 'addAllObject' %}">Toplu Kayıt</a></th>
                 </tr></thead>
                 <tbody>
                 {% for item in objects %}

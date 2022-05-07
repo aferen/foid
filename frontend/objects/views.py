@@ -12,9 +12,6 @@ import random
 @login_required
 def index(request):
   objects = Objects.objects.all().order_by('objectID')
-
-  #saveAllObject()
-
   context = {'objects': objects}
   return render(request, 'objects/index.html', context)
 
@@ -67,12 +64,23 @@ def delete(request, object_id):
   context = {'object': object}
   return render(request, 'objects/delete.html', context)
 
-
-def saveAllObject():
+@is_admin
+@login_required
+def saveAllObject(request):
+  cnt = 0
   Objects.objects.all().delete()
-  objectsEN = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
-  objectsTR = ['kişi', 'bisiklet', 'araba', 'motosiklet', 'uçak', 'otobüs', 'tren', 'kamyon', 'tekne', 'trafik lambası', 'yangın musluğu', 'dur işareti', 'parkmetre', 'bank', 'kuş', 'kedi', 'köpek', 'at', 'koyun', 'inek', 'fil', 'ayı', 'zebra', 'zürafa' , 'sırt çantası', 'şemsiye', 'el çantası', 'kravat', 'bavul', 'frizbi', 'kayak', 'snowboard', 'spor topu', 'uçurtma', 'beyzbol sopası', 'beyzbol eldiveni', 'kaykay', 'sörf tahtası', 'tenis raketi', 'şişe', 'şarap kadehi', 'bardak', 'çatal', 'bıçak', 'kaşık', 'kase', 'muz', 'elma', 'sandviç', 'portakal', 'brokoli', 'havuç', 'sosisli sandviç', 'pizza', 'çörek', 'kek', 'sandalye', 'kanepe', 'saksı bitkisi', 'yatak ', 'yemek masası', 'tuvalet', 'tv', 'dizüstü bilgisayar', 'fare', 'uzaktan kumanda', 'klavye', 'cep telefonu', 'mikrodalga', 'fırın', 'tost makinesi', 'lavabo', 'buzdolabı', 'kitap', 'saat', 'vazo', 'makas', 'oyuncak ayı', 'saç kurutma makinesi', 'diş fırçası']
+  objectsEN = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush', "pie chart", "bar chart", "line chart"]
+  objectsTR = ['insan', 'bisiklet', 'araba', 'motosiklet', 'uçak', 'otobüs', 'tren', 'kamyon', 'tekne', 'trafik lambası', 'yangın musluğu', 'dur işareti', 'parkmetre', 'bank', 'kuş', 'kedi', 'köpek', 'at', 'koyun', 'inek', 'fil', 'ayı', 'zebra', 'zürafa' , 'sırt çantası', 'şemsiye', 'el çantası', 'kravat', 'bavul', 'frizbi', 'kayak', 'snowboard', 'spor topu', 'uçurtma', 'beyzbol sopası', 'beyzbol eldiveni', 'kaykay', 'sörf tahtası', 'tenis raketi', 'şişe', 'şarap kadehi', 'bardak', 'çatal', 'bıçak', 'kaşık', 'kase', 'muz', 'elma', 'sandviç', 'portakal', 'brokoli', 'havuç', 'sosisli sandviç', 'pizza', 'çörek', 'kek', 'sandalye', 'kanepe', 'saksı bitkisi', 'yatak ', 'yemek masası', 'tuvalet', 'tv', 'dizüstü bilgisayar', 'fare', 'uzaktan kumanda', 'klavye', 'cep telefonu', 'mikrodalga', 'fırın', 'tost makinesi', 'lavabo', 'buzdolabı', 'kitap', 'saat', 'vazo', 'makas', 'oyuncak ayı', 'saç kurutma makinesi', 'diş fırçası', "pasta grafik", "bar grafik", "çizgi grafik"]
   for i in range(len(objectsEN)):
+    if len(objectsEN) - i <= 3:
+      id = 500 + cnt
+      cnt = cnt +1
+    else: 
+      id = i
     color = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
+    object = Objects.objects.create(objectID=id,nameEN=objectsEN[i],nameTR=objectsTR[i],color=color)
 
-    object = Objects.objects.create(objectID=i,nameEN=objectsEN[i],nameTR=objectsTR[i],color=color)
+  objects = Objects.objects.all().order_by('objectID')
+  context = {'objects': objects}
+  messages.success(request, 'Toplu nesne kaydı tamamlandı.')
+  return render(request, 'objects/index.html', context)
