@@ -38,7 +38,7 @@ objectDetection = {}
 chartDetection = {}
 objectClassName = {}
 logger = logging.getLogger(__name__)
-
+pd.options.mode.chained_assignment = None
 @api_view(['GET'])
 def getDocument(request,   *args, **kwargs):
     if request.method == 'GET':
@@ -363,8 +363,8 @@ def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber):
             crop_img.save(img_path)
             position= createPositionObject(boxes.tensor[index].numpy())
             image = ImageDTO(img_id,position,scores[index].numpy(),crop_img.width,crop_img.height)
-            objectCount = findObjectsInImage(image,img_path,pageNumber, cnt)
-            #if objectCount == 0:
+            skipChartDetection = findObjectsInImage(image,img_path,pageNumber, cnt)
+            #if not skipChartDetection:
             findChartInImage(image,img_path,pageNumber, cnt)
             page.addImage(image)
 
@@ -388,7 +388,11 @@ def findObjectsInImage(image,imgPath,pageNumber, imageNumber):
         object=ObjectDTO(obj_id,objectClassName[item]['nameTR'],position,scores[index].numpy())
         image.addObject(object)
 
-    return objectCount
+    if objectCount == 0:
+        return False
+    elif (objectCount == 1 and classes[0]==25):
+        return False
+    return True
 
 def findChartInImage(image,imgPath,pageNumber, imageNumber):
     start_time = time.time()
@@ -404,6 +408,7 @@ def findChartInImage(image,imgPath,pageNumber, imageNumber):
     classes = predictions.pred_classes.tolist() if predictions.has("pred_classes") else None
   
     for index, item in enumerate(classes):
+        #if (item==2 and scores[index].numpy() > 0.95) or item != 2:
         obj_id=uuid.uuid4().hex
         position= createPositionObject(boxes.tensor[index].numpy())
         obj = objectClassName.get(objectID=item+500-1)
