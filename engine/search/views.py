@@ -206,8 +206,12 @@ def getResultReport(metadataID):
         df.loc[:, 1.0] = 0
 
     df = df.replace(np.nan, 0)
-    columnsTitles = ['name', 'count', 0.5,0.6,0.7,0.8,0.9,1.0]
+    df.loc[:, 'color'] = ''
+    for index, row in df.iterrows():
+        df["color"][index]= objectClassName.get(nameTR=row['name'])["color"]
+    columnsTitles = ['name', 'color', 'count', 0.5,0.6,0.7,0.8,0.9,1.0]
     df = df.reindex(columns=columnsTitles)
+    print(df)
     return df.to_json(orient='records',force_ascii=False) 
 
 def isAdvancedSearch(query):
@@ -362,7 +366,7 @@ def findImagesInPage(page, pageImgBGR, pageImg, docID, pageNumber):
             image = ImageDTO(img_id,position,scores[index].numpy(),crop_img.width,crop_img.height)
             objectCount = findObjectsInImage(image,img_path,pageNumber, cnt)
             #if objectCount == 0:
-            #findChartInImage(image,img_path,pageNumber, cnt)
+            findChartInImage(image,img_path,pageNumber, cnt)
             page.addImage(image)
 
 def findObjectsInImage(image,imgPath,pageNumber, imageNumber):
@@ -403,8 +407,7 @@ def findChartInImage(image,imgPath,pageNumber, imageNumber):
     for index, item in enumerate(classes):
         obj_id=uuid.uuid4().hex
         position= createPositionObject(boxes.tensor[index].numpy())
-        print("item: ",item)
-        obj = objectClassName.get(objectID=item+500)
+        obj = objectClassName.get(objectID=item+500-1)
         object=ObjectDTO(obj_id,obj['nameTR'],position,scores[index].numpy())
         image.addObject(object)
 
@@ -733,9 +736,11 @@ def setup_cfg_OD_Model():
 
 def setup_cfg_CHT_Model():
     cfg = get_cfg()
-    #cfg.merge_from_file("configs/COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml")
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
-    cfg.DATASETS.TEST = ("my_dataset_test", )
+    #cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml"))
+    cfg.merge_from_file("configs/COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml")
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 4 
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.90
+    #cfg.DATASETS.TEST = ("my_dataset_test", )
     cfg.MODEL.WEIGHTS = "models/model_chart_detection.pth"
     cfg.MODEL.DEVICE = "cpu"
     return cfg

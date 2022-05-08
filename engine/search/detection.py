@@ -26,15 +26,15 @@ class Detection(object):
             self.predictor = AsyncPredictor(cfg, num_gpus=num_gpu)
         else:
             self.predictor = DefaultPredictor(cfg)
-        print(self.metadata)
 
-    def detectChartInImage(self,docPath): 
-        im = cv2.imread(docPath)
+
+    def detectChartInImage(self,imagePath): 
+        im = cv2.imread(imagePath)
         predictions = self.predictor(im)
         return predictions
 
-    def detectObjectsInImage(self,docPath): 
-        im = cv2.imread(docPath)
+    def detectObjectsInImage(self,imagePath): 
+        im = cv2.imread(imagePath)
         predictions = self.predictor(im)
         return predictions
         # v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1)
