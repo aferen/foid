@@ -141,6 +141,9 @@ class FileUpload {
                           for (var colIndex = 0; colIndex < columns.length; colIndex++) {
                             var cellValue = resultReport[i][columns[colIndex]];
                             if (cellValue == null) cellValue = "";
+                            if (colIndex == 1) {
+                                cellValue = '<div style="width: 25px; height: 25px; background: '+ cellValue+'"></div>'
+                            } 
                             row$.append($('<td/>').html(cellValue));
                           }
                           $(tableBody$).append(row$);
@@ -188,6 +191,9 @@ class FileUpload {
                               for (var colIndex = 0; colIndex < columns.length; colIndex++) {
                                 var cellValue = resultReport[i][columns[colIndex]];
                                 if (cellValue == null) cellValue = "";
+                                if (colIndex == 1) {
+                                    cellValue = '<div style="width: 25px; height: 25px; background: '+ cellValue+'"></div>'
+                                } 
                                 row$.append($('<td/>').html(cellValue));
                               }
                               $(tableBody$).append(row$);
@@ -232,7 +238,10 @@ class FileUpload {
                           for (var colIndex = 0; colIndex < columns.length; colIndex++) {
                             var cellValue = resultReport[i][columns[colIndex]];
                             if (cellValue == null) cellValue = "";
-                            row$.append($('<td/>').html(cellValue));
+                            if (colIndex == 1) {
+                                cellValue = '<div style="width: 25px; height: 25px; background: '+ cellValue+'"></div>'
+                            } 
+                            row$.append($('<td/>').html(cellValue));                 
                           }
                           $(tableBody$).append(row$);
                         }
@@ -276,6 +285,9 @@ class FileUpload {
                               for (var colIndex = 0; colIndex < columns.length; colIndex++) {
                                 var cellValue = resultReport[i][columns[colIndex]];
                                 if (cellValue == null) cellValue = "";
+                                if (colIndex == 1) {
+                                    cellValue = '<div style="width: 25px; height: 25px; background: '+ cellValue+'"></div>'
+                                } 
                                 row$.append($('<td/>').html(cellValue));
                               }
                               $(tableBody$).append(row$);
