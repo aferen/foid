@@ -211,7 +211,6 @@ def getResultReport(metadataID):
         df["color"][index]= objectClassName.get(nameTR=row['name'])["color"]
     columnsTitles = ['name', 'color', 'count', 0.5,0.6,0.7,0.8,0.9,1.0]
     df = df.reindex(columns=columnsTitles)
-    print(df)
     return df.to_json(orient='records',force_ascii=False) 
 
 def isAdvancedSearch(query):
